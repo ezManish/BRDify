@@ -1,0 +1,7 @@
+.idea/
+.vscode/
+*.log
+.DS_Store
+.env
+node_modules/
+BRD_Generation_Agent_Blueprint.txt
