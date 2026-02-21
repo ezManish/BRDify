@@ -17,7 +17,11 @@ public class Requirement {
     private String type; // FUNCTIONAL, NON_FUNCTIONAL
     private String priority; // HIGH, MEDIUM, LOW
 
+    @Column(name = "has_conflict")
+    private Boolean hasConflict = false;
+
     @ManyToOne
     @JoinColumn(name = "brd_document_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private BrdDocument brdDocument;
 }

@@ -55,7 +55,15 @@ public class BrdService {
         for (String chunk : chunks) {
             String extractionJson = groqService.extractRequirements(chunk);
             try {
-                JsonNode root = objectMapper.readTree(extractionJson);
+                // Extract only the JSON object, ignoring conversational text before/after
+                String sanitizeJson = extractionJson;
+                int startIdx = sanitizeJson.indexOf('{');
+                int endIdx = sanitizeJson.lastIndexOf('}');
+                if (startIdx != -1 && endIdx != -1 && endIdx >= startIdx) {
+                    sanitizeJson = sanitizeJson.substring(startIdx, endIdx + 1);
+                }
+
+                JsonNode root = objectMapper.readTree(sanitizeJson);
 
                 // Requirements
                 if (root.has("requirements")) {
@@ -130,8 +138,19 @@ public class BrdService {
                 }
 
             } catch (Exception e) {
+                try {
+                    java.io.StringWriter sw = new java.io.StringWriter();
+                    e.printStackTrace(new java.io.PrintWriter(sw));
+                    java.nio.file.Files.writeString(java.nio.file.Path.of("error_dump.txt"),
+                            "Error: " + e.getMessage() + "\n" + sw.toString());
+                } catch (Exception ignored) {
+                }
+
+                System.err.println("Failed to parse Groq extraction JSON. Chunk skipped.");
+                System.err.println(e.getMessage());
                 e.printStackTrace();
-                // Continue to next chunk even if one fails
+                throw new RuntimeException("Parser failed on JSON: " + extractionJson + " | Error: " + e.getMessage(),
+                        e);
             }
         }
 

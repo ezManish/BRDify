@@ -21,5 +21,6 @@ public class Timeline {
 
     @ManyToOne
     @JoinColumn(name = "brd_document_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private BrdDocument brdDocument;
 }

@@ -22,19 +22,19 @@ public class BrdDocument {
     @JoinColumn(name = "source_data_id")
     private SourceData sourceData;
 
-    @OneToMany(mappedBy = "brdDocument", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "brdDocument", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<Requirement> requirements;
 
-    @OneToMany(mappedBy = "brdDocument", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "brdDocument", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<Decision> decisions;
 
-    @OneToMany(mappedBy = "brdDocument", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "brdDocument", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<Stakeholder> stakeholders;
 
-    @OneToMany(mappedBy = "brdDocument", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "brdDocument", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<Risk> risks;
 
-    @OneToMany(mappedBy = "brdDocument", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "brdDocument", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<Timeline> timelines;
 
     @PrePersist
