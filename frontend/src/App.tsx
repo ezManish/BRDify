@@ -31,6 +31,7 @@ function App() {
 
     // New Dashboard State
     const [activeTab, setActiveTab] = useState<TabKey>('summary');
+    const [heroTab, setHeroTab] = useState<'upload' | 'paste'>('upload');
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -177,46 +178,67 @@ function App() {
                         <FileText size={40} color="var(--color-accent)" />
                         <h1 style={{ marginBottom: 0 }}>BRDify</h1>
                     </div>
-                    <p className="text-muted" style={{ fontSize: '1.25rem', marginBottom: '2rem' }}>
+                    <p className="hero-subtitle">
                         The intelligent engine for converting transcripts and scattered notes into structured Business Requirements.
                     </p>
 
-                    <div className="form-grid" style={{ gridTemplateColumns: 'minmax(0, 1fr)', gap: '2rem' }}>
-                        <div
-                            className="upload-zone"
-                            onClick={() => fileInputRef.current?.click()}
-                        >
-                            <UploadCloud size={48} color="var(--color-text-muted)" />
-                            <div>
-                                <h3 className="mb-2">Upload Source Document</h3>
-                                <p className="text-sm text-muted">PDF, DOCX, or TXT up to 10MB</p>
-                            </div>
-                            <input
-                                type="file"
-                                ref={fileInputRef}
-                                onChange={handleFileUpload}
-                                style={{ display: 'none' }}
-                                accept=".txt,.pdf,.docx"
-                            />
+                    <div className="hero-card">
+                        <div className="hero-tabs">
+                            <button
+                                className={`hero-tab ${heroTab === 'upload' ? 'active' : ''}`}
+                                onClick={() => setHeroTab('upload')}
+                            >
+                                <UploadCloud size={16} /> Upload Document
+                            </button>
+                            <button
+                                className={`hero-tab ${heroTab === 'paste' ? 'active' : ''}`}
+                                onClick={() => setHeroTab('paste')}
+                            >
+                                <FileText size={16} /> Paste Text
+                            </button>
                         </div>
 
-                        <div style={{ textAlign: 'left' }}>
-                            <div className="flex items-center justify-between mb-2">
-                                <label className="text-sm" style={{ fontWeight: 600 }}>Or paste transcripts directly</label>
-                                <button
-                                    className="btn btn-primary"
-                                    onClick={handleTextUpload}
-                                    disabled={!textInput.trim()}
+                        <div className="hero-card-content">
+                            {heroTab === 'upload' ? (
+                                <div
+                                    className="upload-zone clean"
+                                    onClick={() => fileInputRef.current?.click()}
                                 >
-                                    Generate BRD
-                                </button>
-                            </div>
-                            <textarea
-                                className="hero-textarea"
-                                placeholder="Paste meeting notes, user interviews, or raw requirements here..."
-                                value={textInput}
-                                onChange={(e) => setTextInput(e.target.value)}
-                            />
+                                    <div className="icon-ring">
+                                        <UploadCloud size={32} color="var(--accent-color)" />
+                                    </div>
+                                    <div>
+                                        <h3 className="mb-1" style={{ fontSize: '1.25rem' }}>Select a file to upload</h3>
+                                        <p className="text-sm text-muted">Supports PDF, DOCX, or TXT up to 10MB</p>
+                                    </div>
+                                    <input
+                                        type="file"
+                                        ref={fileInputRef}
+                                        onChange={handleFileUpload}
+                                        style={{ display: 'none' }}
+                                        accept=".txt,.pdf,.docx"
+                                    />
+                                </div>
+                            ) : (
+                                <div className="paste-zone fade-in">
+                                    <textarea
+                                        className="hero-textarea clean"
+                                        placeholder="Paste meeting notes, user interviews, or raw requirements here..."
+                                        value={textInput}
+                                        onChange={(e) => setTextInput(e.target.value)}
+                                    />
+                                    <div className="flex justify-end mt-4">
+                                        <button
+                                            className="btn btn-primary"
+                                            onClick={handleTextUpload}
+                                            disabled={!textInput.trim()}
+                                            style={{ padding: '0.75rem 1.5rem', fontWeight: 500 }}
+                                        >
+                                            Generate BRD
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
