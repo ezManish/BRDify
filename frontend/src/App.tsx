@@ -1,4 +1,7 @@
 import React, { useState, useRef } from 'react';
+import { Routes, Route } from "react-router-dom";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
 import { uploadFile, uploadText, updateBrd, getRtm, BRD, RTMEntry, getPdfUrl, getDocxUrl } from './api/api';
 import {
     FileText,
