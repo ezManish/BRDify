@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Link, useNavigate, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import { uploadFile, uploadText, updateBrd, getRtm, BRD, RTMEntry, getPdfUrl, getDocxUrl } from './api/api';
@@ -37,6 +37,7 @@ function App() {
     const [heroTab, setHeroTab] = useState<'upload' | 'paste'>('upload');
 
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const navigate = useNavigate();
 
     const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -52,6 +53,7 @@ function App() {
                 const rtm = await getRtm(data.id);
                 setRtmEntries(rtm);
             }
+            navigate('/dashboard');
         } catch (error) {
             console.error('Error uploading file:', error);
             alert('Failed to process the document. Make sure the backend is running.');
@@ -72,6 +74,7 @@ function App() {
                 const rtm = await getRtm(data.id);
                 setRtmEntries(rtm);
             }
+            navigate('/dashboard');
         } catch (error) {
             console.error('Error processing text:', error);
             alert('Failed to process text. Make sure the backend is running.');
@@ -131,51 +134,55 @@ function App() {
     // UI COMPONENTS
     // ==========================================
 
-    if (loading) {
-        return (
-            <div className="dashboard-layout">
-                {/* Skeleton Sidebar */}
-                <aside className="sidebar">
-                    <div className="sidebar-header">
-                        <div className="skeleton" style={{ width: '120px', height: '24px' }}></div>
-                    </div>
-                    <div className="sidebar-nav mt-8">
-                        <div className="skeleton mb-4" style={{ width: '80px', height: '12px' }}></div>
-                        {[1, 2, 3, 4, 5, 6].map(i => (
-                            <div key={i} className="skeleton mb-2" style={{ width: '100%', height: '36px', borderRadius: 'var(--radius-sm)' }}></div>
-                        ))}
-                    </div>
-                </aside>
-                {/* Skeleton Main Stage */}
-                <main className="main-stage">
-                    <header className="stage-header">
-                        <div className="skeleton" style={{ width: '200px', height: '24px' }}></div>
-                        <div className="skeleton" style={{ width: '100px', height: '36px' }}></div>
-                    </header>
-                    <div className="stage-content">
-                        <div className="content-container">
-                            <div className="section-panel">
-                                <div className="panel-header">
-                                    <div className="skeleton mb-2" style={{ width: '250px', height: '32px' }}></div>
-                                    <div className="skeleton" style={{ width: '400px', height: '16px' }}></div>
-                                </div>
-                                {[1, 2, 3].map(i => (
-                                    <div key={i} className="item-card flex-col gap-4">
-                                        <div className="skeleton" style={{ width: '30%', height: '16px' }}></div>
-                                        <div className="skeleton" style={{ width: '100%', height: '60px' }}></div>
+    const renderLandingPage = () => {
+        if (loading) {
+            return (
+                <div className="dashboard-layout">
+                    {/* Skeleton Sidebar */}
+                    <aside className="sidebar">
+                        <div className="sidebar-header">
+                            <div className="skeleton" style={{ width: '120px', height: '24px' }}></div>
+                        </div>
+                        <div className="sidebar-nav mt-8">
+                            <div className="skeleton mb-4" style={{ width: '80px', height: '12px' }}></div>
+                            {[1, 2, 3, 4, 5, 6].map(i => (
+                                <div key={i} className="skeleton mb-2" style={{ width: '100%', height: '36px', borderRadius: 'var(--radius-sm)' }}></div>
+                            ))}
+                        </div>
+                    </aside>
+                    {/* Skeleton Main Stage */}
+                    <main className="main-stage">
+                        <header className="stage-header">
+                            <div className="skeleton" style={{ width: '200px', height: '24px' }}></div>
+                            <div className="skeleton" style={{ width: '100px', height: '36px' }}></div>
+                        </header>
+                        <div className="stage-content">
+                            <div className="content-container">
+                                <div className="section-panel">
+                                    <div className="panel-header">
+                                        <div className="skeleton mb-2" style={{ width: '250px', height: '32px' }}></div>
+                                        <div className="skeleton" style={{ width: '400px', height: '16px' }}></div>
                                     </div>
-                                ))}
+                                    {[1, 2, 3].map(i => (
+                                        <div key={i} className="item-card flex-col gap-4">
+                                            <div className="skeleton" style={{ width: '30%', height: '16px' }}></div>
+                                            <div className="skeleton" style={{ width: '100%', height: '60px' }}></div>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </main>
-            </div>
-        );
-    }
+                    </main>
+                </div>
+            );
+        }
 
-    if (!activeBrd) {
         return (
             <div className="full-hero">
+                <nav className="landing-nav fade-in" style={{ position: 'absolute', top: 0, left: 0, right: 0, padding: '1.5rem 3rem', display: 'flex', justifyContent: 'flex-end', gap: '1rem', zIndex: 10 }}>
+                    <Link to="/login" className="btn btn-secondary" style={{ textDecoration: 'none' }}>Login</Link>
+                    <Link to="/signup" className="btn btn-primary" style={{ textDecoration: 'none' }}>Sign Up</Link>
+                </nav>
                 <div className="hero-content fade-in">
                     <div className="flex items-center justify-center gap-3 mb-6">
                         <FileText size={40} color="var(--color-accent)" />
@@ -247,7 +254,7 @@ function App() {
                 </div>
             </div>
         );
-    }
+    };
 
     // --- Tab Renderers ---
 
@@ -265,11 +272,11 @@ function App() {
                         <input
                             className="input"
                             style={{ fontSize: '1.5rem', fontWeight: 600, padding: '1rem', width: '100%' }}
-                            value={activeBrd.title}
+                            value={activeBrd?.title || ''}
                             onChange={(e) => setEditDraft({ ...editDraft!, title: e.target.value })}
                         />
                     ) : (
-                        <h1 style={{ fontSize: '2rem' }}>{activeBrd.title}</h1>
+                        <h1 style={{ fontSize: '2rem' }}>{activeBrd?.title || 'Untitled Document'}</h1>
                     )}
                 </div>
             </div>
@@ -281,11 +288,11 @@ function App() {
                         <textarea
                             className="textarea mt-2"
                             style={{ minHeight: '300px' }}
-                            value={activeBrd.summary}
+                            value={activeBrd?.summary || ''}
                             onChange={(e) => setEditDraft({ ...editDraft!, summary: e.target.value })}
                         />
                     ) : (
-                        <p className="mt-2" style={{ whiteSpace: 'pre-wrap', color: 'var(--color-text-muted)' }}>{activeBrd.summary}</p>
+                        <p className="mt-2" style={{ whiteSpace: 'pre-wrap', color: 'var(--color-text-muted)' }}>{activeBrd?.summary || 'No summary available.'}</p>
                     )}
                 </div>
             </div>
@@ -306,7 +313,7 @@ function App() {
                 )}
             </div>
 
-            {(!activeBrd.requirements || activeBrd.requirements.length === 0) ? (
+            {(!activeBrd?.requirements || activeBrd.requirements.length === 0) ? (
                 <div className="empty-state">No requirements extracted.</div>
             ) : (
                 <div className="flex-col gap-4">
@@ -367,7 +374,7 @@ function App() {
                 )}
             </div>
 
-            {(!activeBrd.decisions || activeBrd.decisions.length === 0) ? (
+            {(!activeBrd?.decisions || activeBrd.decisions.length === 0) ? (
                 <div className="empty-state">No items found.</div>
             ) : (
                 <div className="flex-col gap-3">
@@ -405,7 +412,7 @@ function App() {
                 )}
             </div>
 
-            {(!activeBrd.stakeholders || activeBrd.stakeholders.length === 0) ? (
+            {(!activeBrd?.stakeholders || activeBrd.stakeholders.length === 0) ? (
                 <div className="empty-state">No items found.</div>
             ) : (
                 <div className="grid-2 gap-4">
@@ -448,7 +455,7 @@ function App() {
                 )}
             </div>
 
-            {(!activeBrd.risks || activeBrd.risks.length === 0) ? (
+            {(!activeBrd?.risks || activeBrd.risks.length === 0) ? (
                 <div className="empty-state">No risks identified.</div>
             ) : (
                 <div className="flex-col gap-4">
@@ -512,7 +519,7 @@ function App() {
                 )}
             </div>
 
-            {(!activeBrd.timelines || activeBrd.timelines.length === 0) ? (
+            {(!activeBrd?.timelines || activeBrd.timelines.length === 0) ? (
                 <div className="empty-state">No timeline established.</div>
             ) : (
                 <div className="flex-col gap-4">
@@ -604,107 +611,121 @@ function App() {
             default: return null;
         }
     };
+    const renderDashboard = () => {
+        // The navigation logic for !activeBrd && !loading is now handled by the <Route> component directly.
+
+        return (
+            <div className="dashboard-layout">
+                {/* Sidebar Navigation */}
+                <aside className="sidebar">
+                    <div className="sidebar-header">
+                        <Link to="/" className="brand flex items-center gap-2" style={{ fontWeight: 700, fontSize: '1.25rem', textDecoration: 'none', color: 'inherit' }} onClick={() => { setBrd(null); setIsEditing(false); setTextInput(''); }}>
+                            <FileText size={24} color="var(--color-accent)" />
+                            BRDify
+                        </Link>
+                    </div>
+
+                    <nav className="sidebar-nav mt-8">
+                        <div className="text-xs mb-2 mt-4 ml-3" style={{ opacity: 0.5, fontWeight: 600, letterSpacing: '0.05em' }}>DOCUMENT STRUCTURE</div>
+                        <div className={`nav-item ${activeTab === 'summary' ? 'active' : ''}`} onClick={() => setActiveTab('summary')}>
+                            <LayoutDashboard size={18} /> Summary Overview
+                        </div>
+                        <div className={`nav-item ${activeTab === 'requirements' ? 'active' : ''}`} onClick={() => setActiveTab('requirements')}>
+                            <ListChecks size={18} /> Requirements <span className="badge ml-auto" style={{ background: 'transparent', border: 'none', color: 'var(--color-text-muted)' }}>{activeBrd?.requirements?.length || 0}</span>
+                        </div>
+                        <div className={`nav-item ${activeTab === 'decisions' ? 'active' : ''}`} onClick={() => setActiveTab('decisions')}>
+                            <Settings size={18} /> Decisions
+                        </div>
+                        <div className={`nav-item ${activeTab === 'stakeholders' ? 'active' : ''}`} onClick={() => setActiveTab('stakeholders')}>
+                            <Users size={18} /> Stakeholders
+                        </div>
+                        <div className={`nav-item ${activeTab === 'risks' ? 'active' : ''}`} onClick={() => setActiveTab('risks')}>
+                            <AlertTriangle size={18} /> Risks
+                        </div>
+                        <div className={`nav-item ${activeTab === 'timeline' ? 'active' : ''}`} onClick={() => setActiveTab('timeline')}>
+                            <Clock size={18} /> Timeline
+                        </div>
+
+                        <div className="text-xs mb-2 mt-8 ml-3" style={{ opacity: 0.5, fontWeight: 600, letterSpacing: '0.05em' }}>ANALYSIS</div>
+                        <div className={`nav-item ${activeTab === 'traceability' ? 'active' : ''}`} onClick={() => setActiveTab('traceability')}>
+                            <Network size={18} /> Traceability Matrix
+                        </div>
+
+                        <div style={{ marginTop: 'auto', paddingBottom: '1rem' }}>
+                            <Link
+                                to="/"
+                                className="btn btn-secondary w-full flex items-center justify-center gap-2"
+                                style={{ textDecoration: 'none' }}
+                                onClick={() => { setBrd(null); setIsEditing(false); setTextInput(''); }}
+                            >
+                                <PlusCircle size={16} /> New Document
+                            </Link>
+                        </div>
+                    </nav>
+                </aside>
+
+                {/* Main Stage Area */}
+                <main className="main-stage">
+                    <header className="stage-header">
+                        <div className="flex items-center gap-4">
+                            {isEditing ? (
+                                <span className="badge" style={{ color: 'var(--color-accent)', borderColor: 'var(--color-border-focus)' }}>Editing Draft</span>
+                            ) : (
+                                <span className="badge">Read-Only</span>
+                            )}
+                            <h3 className="m-0 text-lg font-medium" style={{ color: 'var(--color-text-main)' }}>
+                                {activeBrd?.title ? (activeBrd.title.substring(0, 60) + (activeBrd.title.length > 60 ? '...' : '')) : 'Untitled Document'}
+                            </h3>
+                        </div>
+
+                        <div className="flex gap-3">
+                            {isEditing ? (
+                                <>
+                                    <button className="btn btn-secondary" onClick={() => { setIsEditing(false); setEditDraft(null); }} disabled={saving}>
+                                        <XCircle size={16} /> Cancel
+                                    </button>
+                                    <button className="btn btn-primary" onClick={handleSaveBrd} disabled={saving}>
+                                        {saving ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
+                                        {saving ? 'Saving...' : 'Save Changes'}
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <button className="btn btn-secondary" onClick={startEditing}>
+                                        <Edit3 size={16} /> Edit
+                                    </button>
+                                    {brd && (
+                                        <>
+                                            <a href={getPdfUrl(brd.id)} target="_blank" rel="noreferrer" className="btn btn-primary" style={{ textDecoration: 'none' }}>
+                                                <Download size={16} /> PDF
+                                            </a>
+                                            <a href={getDocxUrl(brd.id)} target="_blank" rel="noreferrer" className="btn btn-primary" style={{ textDecoration: 'none' }}>
+                                                <Download size={16} /> DOCX
+                                            </a>
+                                        </>
+                                    )}
+                                </>
+                            )}
+                        </div>
+                    </header>
+
+                    <div className="stage-content">
+                        <div className="content-container">
+                            {renderActiveTab()}
+                        </div>
+                    </div>
+                </main>
+            </div>
+        );
+    };
 
     return (
-        <div className="dashboard-layout">
-            {/* Sidebar Navigation */}
-            <aside className="sidebar">
-                <div className="sidebar-header">
-                    <div className="brand flex items-center gap-2" style={{ fontWeight: 700, fontSize: '1.25rem' }}>
-                        <FileText size={24} color="var(--color-accent)" />
-                        BRDify
-                    </div>
-                </div>
-
-                <nav className="sidebar-nav mt-8">
-                    <div className="text-xs mb-2 mt-4 ml-3" style={{ opacity: 0.5, fontWeight: 600, letterSpacing: '0.05em' }}>DOCUMENT STRUCTURE</div>
-                    <div className={`nav-item ${activeTab === 'summary' ? 'active' : ''}`} onClick={() => setActiveTab('summary')}>
-                        <LayoutDashboard size={18} /> Summary Overview
-                    </div>
-                    <div className={`nav-item ${activeTab === 'requirements' ? 'active' : ''}`} onClick={() => setActiveTab('requirements')}>
-                        <ListChecks size={18} /> Requirements <span className="badge ml-auto" style={{ background: 'transparent', border: 'none', color: 'var(--color-text-muted)' }}>{activeBrd.requirements?.length || 0}</span>
-                    </div>
-                    <div className={`nav-item ${activeTab === 'decisions' ? 'active' : ''}`} onClick={() => setActiveTab('decisions')}>
-                        <Settings size={18} /> Decisions
-                    </div>
-                    <div className={`nav-item ${activeTab === 'stakeholders' ? 'active' : ''}`} onClick={() => setActiveTab('stakeholders')}>
-                        <Users size={18} /> Stakeholders
-                    </div>
-                    <div className={`nav-item ${activeTab === 'risks' ? 'active' : ''}`} onClick={() => setActiveTab('risks')}>
-                        <AlertTriangle size={18} /> Risks
-                    </div>
-                    <div className={`nav-item ${activeTab === 'timeline' ? 'active' : ''}`} onClick={() => setActiveTab('timeline')}>
-                        <Clock size={18} /> Timeline
-                    </div>
-
-                    <div className="text-xs mb-2 mt-8 ml-3" style={{ opacity: 0.5, fontWeight: 600, letterSpacing: '0.05em' }}>ANALYSIS</div>
-                    <div className={`nav-item ${activeTab === 'traceability' ? 'active' : ''}`} onClick={() => setActiveTab('traceability')}>
-                        <Network size={18} /> Traceability Matrix
-                    </div>
-
-                    <div style={{ marginTop: 'auto', paddingBottom: '1rem' }}>
-                        <button
-                            className="btn btn-secondary w-full flex items-center justify-center gap-2"
-                            onClick={() => { setBrd(null); setIsEditing(false); setTextInput(''); }}
-                        >
-                            <PlusCircle size={16} /> New Document
-                        </button>
-                    </div>
-                </nav>
-            </aside>
-
-            {/* Main Stage Area */}
-            <main className="main-stage">
-                <header className="stage-header">
-                    <div className="flex items-center gap-4">
-                        {isEditing ? (
-                            <span className="badge" style={{ color: 'var(--color-accent)', borderColor: 'var(--color-border-focus)' }}>Editing Draft</span>
-                        ) : (
-                            <span className="badge">Read-Only</span>
-                        )}
-                        <h3 className="m-0 text-lg font-medium" style={{ color: 'var(--color-text-main)' }}>
-                            {activeBrd.title.substring(0, 60)}{activeBrd.title.length > 60 ? '...' : ''}
-                        </h3>
-                    </div>
-
-                    <div className="flex gap-3">
-                        {isEditing ? (
-                            <>
-                                <button className="btn btn-secondary" onClick={() => { setIsEditing(false); setEditDraft(null); }} disabled={saving}>
-                                    <XCircle size={16} /> Cancel
-                                </button>
-                                <button className="btn btn-primary" onClick={handleSaveBrd} disabled={saving}>
-                                    {saving ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
-                                    {saving ? 'Saving...' : 'Save Changes'}
-                                </button>
-                            </>
-                        ) : (
-                            <>
-                                <button className="btn btn-secondary" onClick={startEditing}>
-                                    <Edit3 size={16} /> Edit
-                                </button>
-                                {brd && (
-                                    <>
-                                        <a href={getPdfUrl(brd.id)} target="_blank" rel="noreferrer" className="btn btn-primary" style={{ textDecoration: 'none' }}>
-                                            <Download size={16} /> PDF
-                                        </a>
-                                        <a href={getDocxUrl(brd.id)} target="_blank" rel="noreferrer" className="btn btn-primary" style={{ textDecoration: 'none' }}>
-                                            <Download size={16} /> DOCX
-                                        </a>
-                                    </>
-                                )}
-                            </>
-                        )}
-                    </div>
-                </header>
-
-                <div className="stage-content">
-                    <div className="content-container">
-                        {renderActiveTab()}
-                    </div>
-                </div>
-            </main>
-        </div>
+        <Routes>
+            <Route path="/" element={renderLandingPage()} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/dashboard" element={(!activeBrd && !loading) ? <Navigate to="/" replace /> : renderDashboard()} />
+        </Routes>
     );
 }
 
