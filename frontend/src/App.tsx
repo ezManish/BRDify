@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { uploadFile, uploadText, updateBrd, BRD, getPdfUrl, getDocxUrl } from './api/api';
-import { Upload, Download, Wand2, AlertTriangle, Calendar, Edit, Save, Trash2, Plus } from 'lucide-react';
+import { uploadFile, uploadText, updateBrd, getRtm, BRD, RTMEntry, getPdfUrl, getDocxUrl } from './api/api';
+import { Upload, Download, Wand2, AlertTriangle, Calendar, Edit, Save, Trash2, Plus, Network } from 'lucide-react';
 
 function App() {
     const [brd, setBrd] = useState<BRD | null>(null);
@@ -8,6 +8,7 @@ function App() {
     const [textInput, setTextInput] = useState('');
     const [isEditing, setIsEditing] = useState(false);
     const [editDraft, setEditDraft] = useState<BRD | null>(null);
+    const [rtmEntries, setRtmEntries] = useState<RTMEntry[]>([]);
     const [saving, setSaving] = useState(false);
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -17,6 +18,8 @@ function App() {
                 const result = await uploadFile(e.target.files[0]);
                 setBrd(result);
                 setEditDraft(result);
+                const rtmResult = await getRtm(result.id);
+                setRtmEntries(rtmResult);
                 setIsEditing(true); // default to edit mode after generation
             } catch (error) {
                 console.error("Upload failed", error);
@@ -34,6 +37,8 @@ function App() {
             const result = await uploadText(textInput);
             setBrd(result);
             setEditDraft(result);
+            const rtmResult = await getRtm(result.id);
+            setRtmEntries(rtmResult);
             setIsEditing(true); // default to edit mode after generation
         } catch (error) {
             console.error("Extraction failed", error);
@@ -49,6 +54,8 @@ function App() {
         try {
             const result = await updateBrd(editDraft.id, editDraft);
             setBrd(result);
+            const rtmResult = await getRtm(editDraft.id);
+            setRtmEntries(rtmResult);
             setIsEditing(false); // Mode back to view
         } catch (error) {
             console.error("Save failed", error);
@@ -284,6 +291,37 @@ function App() {
                                 ))}
                             </ul>
                         ) : <p>No timeline milestones identified.</p>}
+
+                        {/* RTM TABLE DISPLAY */}
+                        {rtmEntries.length > 0 && (
+                            <div style={{ marginTop: '2rem', borderTop: '1px solid #e2e8f0', paddingTop: '2rem' }}>
+                                <h3><Network size={18} style={{ display: 'inline', marginRight: '8px' }} />Requirement Traceability Matrix</h3>
+                                <div style={{ overflowX: 'auto' }}>
+                                    <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '1rem', fontSize: '0.9rem' }}>
+                                        <thead>
+                                            <tr style={{ background: '#f8fafc', borderBottom: '2px solid #cbd5e1' }}>
+                                                <th style={{ padding: '0.75rem', textAlign: 'left', border: '1px solid #e2e8f0' }}>Requirement</th>
+                                                <th style={{ padding: '0.75rem', textAlign: 'left', border: '1px solid #e2e8f0', width: '30%' }}>Source Chunk</th>
+                                                <th style={{ padding: '0.75rem', textAlign: 'left', border: '1px solid #e2e8f0' }}>Decision</th>
+                                                <th style={{ padding: '0.75rem', textAlign: 'left', border: '1px solid #e2e8f0' }}>Risk</th>
+                                                <th style={{ padding: '0.75rem', textAlign: 'left', border: '1px solid #e2e8f0' }}>Timeline</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {rtmEntries.map((rtm) => (
+                                                <tr key={rtm.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                                                    <td style={{ padding: '0.75rem', border: '1px solid #e2e8f0', background: '#f0f9ff' }}>{rtm.requirement?.description || '-'}</td>
+                                                    <td style={{ padding: '0.75rem', border: '1px solid #e2e8f0', fontStyle: 'italic', color: '#64748b' }}>"{rtm.sourceChunk}"</td>
+                                                    <td style={{ padding: '0.75rem', border: '1px solid #e2e8f0' }}>{rtm.decision?.description || '-'}</td>
+                                                    <td style={{ padding: '0.75rem', border: '1px solid #e2e8f0', color: rtm.risk ? '#ef4444' : 'inherit' }}>{rtm.risk?.description || '-'}</td>
+                                                    <td style={{ padding: '0.75rem', border: '1px solid #e2e8f0' }}>{rtm.timeline?.milestone || '-'}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
 
                         <div style={{ marginTop: '2rem', textAlign: 'center' }}>
                             <button className="btn" style={{ background: 'gray' }} onClick={() => { setBrd(null); setIsEditing(false); }}>

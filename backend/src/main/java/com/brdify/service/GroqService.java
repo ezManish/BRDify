@@ -30,12 +30,13 @@ public class GroqService {
 
     public String extractRequirements(String context) {
         String systemPrompt = "You are a specialized business analyst. Your goal is to extract structured business requirements from the provided text. "
-                + "Return the output as a JSON object with these keys: " +
-                "'requirements' (list of strings), " +
-                "'decisions' (list of strings), " +
-                "'stakeholders' (list of formatted strings 'Name: Role'), " +
-                "'risks' (list of objects with 'description', 'probability', 'impact', 'mitigation'), " +
-                "'timeline' (list of objects with 'milestone', 'expectedDate', 'description').";
+                + "Return the output as a JSON object strictly adhering to these keys: \n" +
+                "- 'decisions' (array of strings)\n" +
+                "- 'risks' (array of objects with 'description', 'probability', 'impact', 'mitigation')\n" +
+                "- 'timeline' (array of objects with 'milestone', 'expectedDate', 'description')\n" +
+                "- 'requirements' (array of objects with 'description', 'sourceQuote', 'relatedDecisionIndex', 'relatedRiskIndex', 'relatedTimelineIndex').\n"
+                +
+                "For EACH requirement: 'sourceQuote' MUST be the exact verbatim sentence from the text. 'relatedDecisionIndex', 'relatedRiskIndex', 'relatedTimelineIndex' MUST be an integer 0-indexed number (0, 1, 2) pointing to the element you generated. If no link, set to null.";
 
         String userMessage = "Analyze the following text and extract requirements:\n\n" + context;
 

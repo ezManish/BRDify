@@ -9,6 +9,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api")
@@ -18,6 +19,7 @@ public class BrdController {
 
     private final BrdService brdService;
     private final com.brdify.service.DocumentGenerationService documentGenerationService;
+    private final com.brdify.service.RtmService rtmService;
 
     @PostMapping("/upload")
     public ResponseEntity<BrdDocument> uploadFile(@RequestParam("file") MultipartFile file) {
@@ -41,6 +43,11 @@ public class BrdController {
     @GetMapping("/brd/{id}")
     public ResponseEntity<BrdDocument> getBrd(@PathVariable Long id) {
         return ResponseEntity.ok(brdService.getBrd(id));
+    }
+
+    @GetMapping("/brd/{id}/rtm")
+    public ResponseEntity<List<com.brdify.domain.RtmEntry>> getRtm(@PathVariable Long id) {
+        return ResponseEntity.ok(rtmService.getRtmForBrd(id));
     }
 
     @PutMapping("/brd/{id}")

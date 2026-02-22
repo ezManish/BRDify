@@ -13,6 +13,15 @@ export interface BRD {
   timelines: { milestone: string; expectedDate: string; description: string }[];
 }
 
+export interface RTMEntry {
+  id: number;
+  sourceChunk: string;
+  requirement?: { id: number; description: string };
+  decision?: { id: number; description: string };
+  risk?: { id: number; description: string };
+  timeline?: { id: number; milestone: string };
+}
+
 export const uploadFile = async (file: File): Promise<BRD> => {
   const formData = new FormData();
   formData.append('file', file);
@@ -29,6 +38,11 @@ export const uploadText = async (text: string): Promise<BRD> => {
 
 export const getBrd = async (id: number): Promise<BRD> => {
   const response = await axios.get(`${API_URL}/brd/${id}`);
+  return response.data;
+};
+
+export const getRtm = async (id: number): Promise<RTMEntry[]> => {
+  const response = await axios.get(`${API_URL}/brd/${id}/rtm`);
   return response.data;
 };
 

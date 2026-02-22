@@ -37,6 +37,9 @@ public class BrdDocument {
     @OneToMany(mappedBy = "brdDocument", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     private List<Timeline> timelines;
 
+    @OneToMany(mappedBy = "brdDocument", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    private List<RtmEntry> rtmEntries;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
