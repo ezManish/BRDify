@@ -38,9 +38,11 @@ public class GroqService {
                 "- 'requirements' (array of objects with 'description', 'sourceQuote', 'relatedDecisionIndex', 'relatedRiskIndex', 'relatedTimelineIndex').\n"
                 +
                 "\nCRITICAL INSTRUCTIONS FOR 'requirements':\n" +
-                "1. You MUST include a 'sourceQuote' string for EVERY requirement. This MUST be a SHORT, concise exact verbatim phrase or snippet (under 15 words) from the text that justifies the requirement, NOT a full sentence.\n"
+                "1. 'description' MUST be a formal, professionally written business requirement statement (e.g., 'The system shall...').\n"
                 +
-                "2. 'relatedDecisionIndex', 'relatedRiskIndex', 'relatedTimelineIndex' MUST be an integer 0-indexed number (0, 1, 2) pointing to the element you generated. If no link, set to null.";
+                "2. 'sourceQuote' MUST be a SHORT, exact verbatim phrase (under 15 words) from the source text that justifies the requirement. It MUST NOT be identical to the description.\n"
+                +
+                "3. 'relatedDecisionIndex', 'relatedRiskIndex', 'relatedTimelineIndex' MUST be an integer 0-indexed number (0, 1, 2) pointing to the element you generated. If no link, set to null.";
 
         String userMessage = "Analyze the following text and extract requirements:\n\n" + context;
 

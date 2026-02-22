@@ -15,6 +15,10 @@ public class BrdDocument {
     private String title;
     private String status;
 
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
+    private String summary;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

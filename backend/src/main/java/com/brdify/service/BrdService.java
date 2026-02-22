@@ -45,6 +45,10 @@ public class BrdService {
         brdDocument.setStatus("DRAFT");
         brdDocument.setSourceData(sourceData);
 
+        // Generate Executive Summary
+        String executiveSummary = groqService.generateExecutiveSummary(cleanedContent);
+        brdDocument.setSummary(executiveSummary);
+
         List<Requirement> requirements = new ArrayList<>();
         List<Decision> decisions = new ArrayList<>();
         List<Stakeholder> stakeholders = new ArrayList<>();
@@ -121,6 +125,7 @@ public class BrdService {
                         } else {
                             req.setDescription(node.asText());
                         }
+                        req.setSourceQuote(quote);
                         req.setType("FUNCTIONAL");
                         req.setPriority("MEDIUM");
                         req.setBrdDocument(brdDocument);
@@ -292,6 +297,10 @@ public class BrdService {
 
         if (updatedData.getTitle() != null) {
             existingBrd.setTitle(updatedData.getTitle());
+        }
+
+        if (updatedData.getSummary() != null) {
+            existingBrd.setSummary(updatedData.getSummary());
         }
 
         // Update Requirements

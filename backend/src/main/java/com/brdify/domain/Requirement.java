@@ -14,6 +14,10 @@ public class Requirement {
     @Column(columnDefinition = "LONGTEXT")
     private String description;
 
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
+    private String sourceQuote;
+
     private String type; // FUNCTIONAL, NON_FUNCTIONAL
     private String priority; // HIGH, MEDIUM, LOW
 
