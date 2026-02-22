@@ -18,8 +18,12 @@ import {
     Clock,
     Edit3,
     PlusCircle,
-    Network
+    Network,
+    LogOut
 } from 'lucide-react';
+import { useAuth } from './contexts/AuthContext';
+import { signOut } from 'firebase/auth';
+import { auth } from './firebase';
 
 type TabKey = 'summary' | 'requirements' | 'decisions' | 'stakeholders' | 'risks' | 'timeline' | 'traceability';
 
@@ -38,8 +42,14 @@ function App() {
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const navigate = useNavigate();
+    const { currentUser } = useAuth();
 
     const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (!currentUser) {
+            navigate('/login');
+            return;
+        }
+
         const file = event.target.files?.[0];
         if (!file) return;
 
@@ -63,6 +73,11 @@ function App() {
     };
 
     const handleTextUpload = async () => {
+        if (!currentUser) {
+            navigate('/login');
+            return;
+        }
+
         if (!textInput.trim()) return;
 
         setLoading(true);
@@ -180,8 +195,18 @@ function App() {
         return (
             <div className="full-hero">
                 <nav className="landing-nav fade-in" style={{ position: 'absolute', top: 0, left: 0, right: 0, padding: '1.5rem 3rem', display: 'flex', justifyContent: 'flex-end', gap: '1rem', zIndex: 10 }}>
-                    <Link to="/login" className="btn btn-secondary" style={{ textDecoration: 'none' }}>Login</Link>
-                    <Link to="/signup" className="btn btn-primary" style={{ textDecoration: 'none' }}>Sign Up</Link>
+                    {currentUser ? (
+                        <>
+                            <span style={{ alignSelf: 'center', color: 'var(--color-text-main)', fontSize: '0.875rem' }}>Hi, {currentUser.displayName || currentUser.email}</span>
+                            <button className="btn btn-secondary" onClick={() => signOut(auth)}>Logout</button>
+                            <Link to="/dashboard" className="btn btn-primary" style={{ textDecoration: 'none' }}>Go to Dashboard</Link>
+                        </>
+                    ) : (
+                        <>
+                            <Link to="/login" className="btn btn-secondary" style={{ textDecoration: 'none' }}>Login</Link>
+                            <Link to="/signup" className="btn btn-primary" style={{ textDecoration: 'none' }}>Sign Up</Link>
+                        </>
+                    )}
                 </nav>
                 <div className="hero-content fade-in">
                     <div className="flex items-center justify-center gap-3 mb-6">
@@ -192,65 +217,72 @@ function App() {
                         The intelligent engine for converting transcripts and scattered notes into structured Business Requirements.
                     </p>
 
-                    <div className="hero-card">
-                        <div className="hero-tabs">
-                            <button
-                                className={`hero-tab ${heroTab === 'upload' ? 'active' : ''}`}
-                                onClick={() => setHeroTab('upload')}
-                            >
-                                <UploadCloud size={16} /> Upload Document
-                            </button>
-                            <button
-                                className={`hero-tab ${heroTab === 'paste' ? 'active' : ''}`}
-                                onClick={() => setHeroTab('paste')}
-                            >
-                                <FileText size={16} /> Paste Text
-                            </button>
-                        </div>
-
-                        <div className="hero-card-content">
-                            {heroTab === 'upload' ? (
-                                <div
-                                    className="upload-zone clean"
-                                    onClick={() => fileInputRef.current?.click()}
+                    {currentUser ? (
+                        <div className="hero-card">
+                            <div className="hero-tabs">
+                                <button
+                                    className={`hero-tab ${heroTab === 'upload' ? 'active' : ''}`}
+                                    onClick={() => setHeroTab('upload')}
                                 >
-                                    <div className="icon-ring">
-                                        <UploadCloud size={32} color="var(--accent-color)" />
+                                    <UploadCloud size={16} /> Upload Document
+                                </button>
+                                <button
+                                    className={`hero-tab ${heroTab === 'paste' ? 'active' : ''}`}
+                                    onClick={() => setHeroTab('paste')}
+                                >
+                                    <FileText size={16} /> Paste Text
+                                </button>
+                            </div>
+
+                            <div className="hero-card-content">
+                                {heroTab === 'upload' ? (
+                                    <div
+                                        className="upload-zone clean"
+                                        onClick={() => fileInputRef.current?.click()}
+                                    >
+                                        <div className="icon-ring">
+                                            <UploadCloud size={32} color="var(--accent-color)" />
+                                        </div>
+                                        <div>
+                                            <h3 className="mb-1" style={{ fontSize: '1.25rem' }}>Select a file to upload</h3>
+                                            <p className="text-sm text-muted">Supports PDF, DOCX, or TXT up to 10MB</p>
+                                        </div>
+                                        <input
+                                            type="file"
+                                            ref={fileInputRef}
+                                            onChange={handleFileUpload}
+                                            style={{ display: 'none' }}
+                                            accept=".txt,.pdf,.docx"
+                                        />
                                     </div>
-                                    <div>
-                                        <h3 className="mb-1" style={{ fontSize: '1.25rem' }}>Select a file to upload</h3>
-                                        <p className="text-sm text-muted">Supports PDF, DOCX, or TXT up to 10MB</p>
+                                ) : (
+                                    <div className="paste-zone fade-in">
+                                        <textarea
+                                            className="hero-textarea clean"
+                                            placeholder="Paste meeting notes, user interviews, or raw requirements here..."
+                                            value={textInput}
+                                            onChange={(e) => setTextInput(e.target.value)}
+                                        />
+                                        <div className="flex justify-end mt-4">
+                                            <button
+                                                className="btn btn-primary"
+                                                onClick={handleTextUpload}
+                                                disabled={!textInput.trim()}
+                                                style={{ padding: '0.75rem 1.5rem', fontWeight: 500 }}
+                                            >
+                                                Generate BRD
+                                            </button>
+                                        </div>
                                     </div>
-                                    <input
-                                        type="file"
-                                        ref={fileInputRef}
-                                        onChange={handleFileUpload}
-                                        style={{ display: 'none' }}
-                                        accept=".txt,.pdf,.docx"
-                                    />
-                                </div>
-                            ) : (
-                                <div className="paste-zone fade-in">
-                                    <textarea
-                                        className="hero-textarea clean"
-                                        placeholder="Paste meeting notes, user interviews, or raw requirements here..."
-                                        value={textInput}
-                                        onChange={(e) => setTextInput(e.target.value)}
-                                    />
-                                    <div className="flex justify-end mt-4">
-                                        <button
-                                            className="btn btn-primary"
-                                            onClick={handleTextUpload}
-                                            disabled={!textInput.trim()}
-                                            style={{ padding: '0.75rem 1.5rem', fontWeight: 500 }}
-                                        >
-                                            Generate BRD
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
+                                )}
+                            </div>
                         </div>
-                    </div>
+                    ) : (
+                        <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '3rem' }}>
+                            <Link to="/signup" className="btn btn-primary" style={{ padding: '0.875rem 2.5rem', fontSize: '1.125rem', textDecoration: 'none', borderRadius: 'var(--radius-md)' }}>Get Started for Free</Link>
+                            <Link to="/login" className="btn btn-secondary" style={{ padding: '0.875rem 2.5rem', fontSize: '1.125rem', textDecoration: 'none', borderRadius: 'var(--radius-md)' }}>Log In</Link>
+                        </div>
+                    )}
                 </div>
             </div>
         );
@@ -651,7 +683,7 @@ function App() {
                             <Network size={18} /> Traceability Matrix
                         </div>
 
-                        <div style={{ marginTop: 'auto', paddingBottom: '1rem' }}>
+                        <div style={{ marginTop: 'auto', paddingBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                             <Link
                                 to="/"
                                 className="btn btn-secondary w-full flex items-center justify-center gap-2"
@@ -660,6 +692,15 @@ function App() {
                             >
                                 <PlusCircle size={16} /> New Document
                             </Link>
+                            <button
+                                className="btn btn-secondary w-full flex items-center justify-center gap-2"
+                                onClick={async () => {
+                                    await signOut(auth);
+                                    navigate('/login');
+                                }}
+                            >
+                                <LogOut size={16} /> Logout
+                            </button>
                         </div>
                     </nav>
                 </aside>
@@ -719,12 +760,23 @@ function App() {
         );
     };
 
+    const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+        const { currentUser, loading } = useAuth();
+        if (loading) return null; // or a spinner
+        if (!currentUser) return <Navigate to="/login" replace />;
+        return <>{children}</>;
+    };
+
     return (
         <Routes>
             <Route path="/" element={renderLandingPage()} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/dashboard" element={(!activeBrd && !loading) ? <Navigate to="/" replace /> : renderDashboard()} />
+            <Route path="/login" element={currentUser ? <Navigate to="/dashboard" replace /> : <Login />} />
+            <Route path="/signup" element={currentUser ? <Navigate to="/dashboard" replace /> : <Signup />} />
+            <Route path="/dashboard" element={
+                <ProtectedRoute>
+                    {(!activeBrd && !loading) ? <Navigate to="/" replace /> : renderDashboard()}
+                </ProtectedRoute>
+            } />
         </Routes>
     );
 }
