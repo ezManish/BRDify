@@ -32,5 +32,10 @@ export const getBrd = async (id: number): Promise<BRD> => {
   return response.data;
 };
 
+export const updateBrd = async (id: number, data: BRD): Promise<BRD> => {
+  const response = await axios.put(`${API_URL}/brd/${id}`, data);
+  return response.data;
+};
+
 export const getPdfUrl = (id: number) => `${API_URL}/brd/${id}/pdf`;
 export const getDocxUrl = (id: number) => `${API_URL}/brd/${id}/docx`;

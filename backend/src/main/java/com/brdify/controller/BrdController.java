@@ -43,6 +43,12 @@ public class BrdController {
         return ResponseEntity.ok(brdService.getBrd(id));
     }
 
+    @PutMapping("/brd/{id}")
+    public ResponseEntity<BrdDocument> updateBrd(@PathVariable Long id, @RequestBody BrdDocument updatedData) {
+        BrdDocument brd = brdService.updateBrd(id, updatedData);
+        return ResponseEntity.ok(brd);
+    }
+
     @GetMapping("/brd/{id}/pdf")
     public ResponseEntity<byte[]> downloadPdf(@PathVariable Long id) {
         BrdDocument brd = brdService.getBrd(id);

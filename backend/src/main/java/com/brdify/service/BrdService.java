@@ -166,4 +166,66 @@ public class BrdService {
     public BrdDocument getBrd(Long id) {
         return brdDocumentRepository.findById(id).orElseThrow();
     }
+
+    @Transactional
+    public BrdDocument updateBrd(Long id, BrdDocument updatedData) {
+        BrdDocument existingBrd = brdDocumentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("BRD not found"));
+
+        if (updatedData.getTitle() != null) {
+            existingBrd.setTitle(updatedData.getTitle());
+        }
+
+        // Update Requirements
+        existingBrd.getRequirements().clear();
+        if (updatedData.getRequirements() != null) {
+            updatedData.getRequirements().forEach(r -> {
+                r.setId(null);
+                r.setBrdDocument(existingBrd);
+            });
+            existingBrd.getRequirements().addAll(updatedData.getRequirements());
+        }
+
+        // Update Decisions
+        existingBrd.getDecisions().clear();
+        if (updatedData.getDecisions() != null) {
+            updatedData.getDecisions().forEach(d -> {
+                d.setId(null);
+                d.setBrdDocument(existingBrd);
+            });
+            existingBrd.getDecisions().addAll(updatedData.getDecisions());
+        }
+
+        // Update Stakeholders
+        existingBrd.getStakeholders().clear();
+        if (updatedData.getStakeholders() != null) {
+            updatedData.getStakeholders().forEach(s -> {
+                s.setId(null);
+                s.setBrdDocument(existingBrd);
+            });
+            existingBrd.getStakeholders().addAll(updatedData.getStakeholders());
+        }
+
+        // Update Risks
+        existingBrd.getRisks().clear();
+        if (updatedData.getRisks() != null) {
+            updatedData.getRisks().forEach(r -> {
+                r.setId(null);
+                r.setBrdDocument(existingBrd);
+            });
+            existingBrd.getRisks().addAll(updatedData.getRisks());
+        }
+
+        // Update Timelines
+        existingBrd.getTimelines().clear();
+        if (updatedData.getTimelines() != null) {
+            updatedData.getTimelines().forEach(t -> {
+                t.setId(null);
+                t.setBrdDocument(existingBrd);
+            });
+            existingBrd.getTimelines().addAll(updatedData.getTimelines());
+        }
+
+        return brdDocumentRepository.save(existingBrd);
+    }
 }
