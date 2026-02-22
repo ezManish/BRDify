@@ -1,10 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { uploadFile, uploadText, updateBrd, getRtm, BRD, RTMEntry, getPdfUrl, getDocxUrl } from './api/api';
 import {
-    Upload, Download, Wand2, AlertTriangle, Calendar, Edit, Save,
-    Trash2, Plus, Network, FileTerminal, FileText, CheckCircle2,
-    Users, PlusCircle
+    FileText,
+    UploadCloud,
+    Loader2,
+    Save,
+    XCircle,
+    Download,
+    Settings,
+    LayoutDashboard,
+    ListChecks,
+    Users,
+    AlertTriangle,
+    Clock,
+    Edit3,
+    PlusCircle,
+    Network
 } from 'lucide-react';
+
+type TabKey = 'summary' | 'requirements' | 'decisions' | 'stakeholders' | 'risks' | 'timeline' | 'traceability';
 
 function App() {
     const [brd, setBrd] = useState<BRD | null>(null);
@@ -15,38 +29,48 @@ function App() {
     const [rtmEntries, setRtmEntries] = useState<RTMEntry[]>([]);
     const [saving, setSaving] = useState(false);
 
-    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            setLoading(true);
-            try {
-                const result = await uploadFile(e.target.files[0]);
-                setBrd(result);
-                setEditDraft(result);
-                const rtmResult = await getRtm(result.id);
-                setRtmEntries(rtmResult);
-                setIsEditing(true);
-            } catch (error) {
-                console.error("Upload failed", error);
-                alert("Upload failed. Please try again.");
-            } finally {
-                setLoading(false);
+    // New Dashboard State
+    const [activeTab, setActiveTab] = useState<TabKey>('summary');
+
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        setLoading(true);
+
+        try {
+            const data = await uploadFile(file);
+            setBrd(data);
+            setActiveTab('summary');
+            if (data) {
+                const rtm = await getRtm(data.id);
+                setRtmEntries(rtm);
             }
+        } catch (error) {
+            console.error('Error uploading file:', error);
+            alert('Failed to process the document. Make sure the backend is running.');
+        } finally {
+            setLoading(false);
         }
     };
 
     const handleTextUpload = async () => {
         if (!textInput.trim()) return;
+
         setLoading(true);
         try {
-            const result = await uploadText(textInput);
-            setBrd(result);
-            setEditDraft(result);
-            const rtmResult = await getRtm(result.id);
-            setRtmEntries(rtmResult);
-            setIsEditing(true);
+            const data = await uploadText(textInput);
+            setBrd(data);
+            setActiveTab('summary');
+            if (data) {
+                const rtm = await getRtm(data.id);
+                setRtmEntries(rtm);
+            }
         } catch (error) {
-            console.error("Extraction failed", error);
-            alert("Extraction failed. Please try again.");
+            console.error('Error processing text:', error);
+            alert('Failed to process text. Make sure the backend is running.');
         } finally {
             setLoading(false);
         }
@@ -56,31 +80,35 @@ function App() {
         if (!editDraft) return;
         setSaving(true);
         try {
-            const result = await updateBrd(editDraft.id, editDraft);
-            setBrd(result);
-            const rtmResult = await getRtm(editDraft.id);
-            setRtmEntries(rtmResult);
+            const data = await updateBrd(editDraft.id, editDraft);
+            setBrd(data);
             setIsEditing(false);
+            setEditDraft(null);
+
+            const rtm = await getRtm(data.id);
+            setRtmEntries(rtm);
+
         } catch (error) {
-            console.error("Save failed", error);
-            alert("Failed to save changes.");
+            console.error('Error saving BRD:', error);
+            alert('Failed to save BRD.');
         } finally {
             setSaving(false);
         }
     };
 
+    // --- Array Helpers ---
     const updateDraftArray = (field: keyof BRD, index: number, key: string, value: string) => {
         if (!editDraft) return;
-        const newArray = [...(editDraft[field] as any[])];
-        newArray[index] = { ...newArray[index], [key]: value };
-        setEditDraft({ ...editDraft, [field]: newArray });
+        const newArr = [...(editDraft[field] as any[])];
+        newArr[index] = { ...newArr[index], [key]: value };
+        setEditDraft({ ...editDraft, [field]: newArr });
     };
 
     const removeDraftArrayItem = (field: keyof BRD, index: number) => {
         if (!editDraft) return;
-        const newArray = [...(editDraft[field] as any[])];
-        newArray.splice(index, 1);
-        setEditDraft({ ...editDraft, [field]: newArray });
+        const newArr = [...(editDraft[field] as any[])];
+        newArr.splice(index, 1);
+        setEditDraft({ ...editDraft, [field]: newArr });
     };
 
     const addDraftArrayItem = (field: keyof BRD, emptyObj: any) => {
@@ -88,447 +116,568 @@ function App() {
         setEditDraft({ ...editDraft, [field]: [...(editDraft[field] as any[]), emptyObj] });
     };
 
-    return (
-        <div className="app-container">
-            <header className="topbar">
-                <div className="topbar-brand">
-                    <FileTerminal size={24} color="var(--color-accent)" />
-                    BRDify
-                </div>
-                {brd && (
-                    <div className="text-sm font-medium text-muted">
-                        Enterprise Requirements Engine
+    const startEditing = () => {
+        setEditDraft(JSON.parse(JSON.stringify(brd))); // Deep copy
+        setIsEditing(true);
+    };
+
+    const activeBrd = isEditing ? editDraft : brd;
+
+    // ==========================================
+    // UI COMPONENTS
+    // ==========================================
+
+    if (loading) {
+        return (
+            <div className="dashboard-layout">
+                {/* Skeleton Sidebar */}
+                <aside className="sidebar">
+                    <div className="sidebar-header">
+                        <div className="skeleton" style={{ width: '120px', height: '24px' }}></div>
                     </div>
-                )}
-            </header>
+                    <div className="sidebar-nav mt-8">
+                        <div className="skeleton mb-4" style={{ width: '80px', height: '12px' }}></div>
+                        {[1, 2, 3, 4, 5, 6].map(i => (
+                            <div key={i} className="skeleton mb-2" style={{ width: '100%', height: '36px', borderRadius: 'var(--radius-sm)' }}></div>
+                        ))}
+                    </div>
+                </aside>
+                {/* Skeleton Main Stage */}
+                <main className="main-stage">
+                    <header className="stage-header">
+                        <div className="skeleton" style={{ width: '200px', height: '24px' }}></div>
+                        <div className="skeleton" style={{ width: '100px', height: '36px' }}></div>
+                    </header>
+                    <div className="stage-content">
+                        <div className="content-container">
+                            <div className="section-panel">
+                                <div className="panel-header">
+                                    <div className="skeleton mb-2" style={{ width: '250px', height: '32px' }}></div>
+                                    <div className="skeleton" style={{ width: '400px', height: '16px' }}></div>
+                                </div>
+                                {[1, 2, 3].map(i => (
+                                    <div key={i} className="item-card flex-col gap-4">
+                                        <div className="skeleton" style={{ width: '30%', height: '16px' }}></div>
+                                        <div className="skeleton" style={{ width: '100%', height: '60px' }}></div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        );
+    }
 
-            <main className="main-content">
-                {!brd && !loading && (
-                    <section className="hero-section fade-in">
-                        <h1>Transform chaos into structured requirements.</h1>
-                        <p>Upload meeting transcripts, raw emails, or project briefs to instantly generate premium Business Requirement Documents.</p>
+    if (!activeBrd) {
+        return (
+            <div className="full-hero">
+                <div className="hero-content fade-in">
+                    <div className="flex items-center justify-center gap-3 mb-6">
+                        <FileText size={40} color="var(--color-accent)" />
+                        <h1 style={{ marginBottom: 0 }}>BRDify</h1>
+                    </div>
+                    <p className="text-muted" style={{ fontSize: '1.25rem', marginBottom: '2rem' }}>
+                        The intelligent engine for converting transcripts and scattered notes into structured Business Requirements.
+                    </p>
 
-                        <div className="upload-box" onClick={() => document.getElementById('file-upload')?.click()}>
-                            <Upload size={48} color="var(--color-text-light)" />
+                    <div className="form-grid" style={{ gridTemplateColumns: 'minmax(0, 1fr)', gap: '2rem' }}>
+                        <div
+                            className="upload-zone"
+                            onClick={() => fileInputRef.current?.click()}
+                        >
+                            <UploadCloud size={48} color="var(--color-text-muted)" />
                             <div>
                                 <h3 className="mb-2">Upload Source Document</h3>
-                                <p className="text-sm text-muted m-0">Supports .txt and .pdf formats up to 10MB</p>
+                                <p className="text-sm text-muted">PDF, DOCX, or TXT up to 10MB</p>
                             </div>
                             <input
-                                id="file-upload"
                                 type="file"
-                                hidden
+                                ref={fileInputRef}
                                 onChange={handleFileUpload}
-                                accept=".txt,.pdf"
+                                style={{ display: 'none' }}
+                                accept=".txt,.pdf,.docx"
                             />
                         </div>
 
-                        <div className="divider">OR PASTE TEXT DIRECTLY</div>
-
-                        <div className="flex-col gap-4">
-                            <textarea
-                                className="textarea"
-                                placeholder="Paste your raw project discussion, email thread, or feature requests here..."
-                                value={textInput}
-                                onChange={(e) => setTextInput(e.target.value)}
-                            />
-                            <div className="flex justify-between items-center">
-                                <span className="text-sm text-muted">Powered by deep LLM extraction</span>
+                        <div style={{ textAlign: 'left' }}>
+                            <div className="flex items-center justify-between mb-2">
+                                <label className="text-sm" style={{ fontWeight: 600 }}>Or paste transcripts directly</label>
                                 <button
                                     className="btn btn-primary"
                                     onClick={handleTextUpload}
                                     disabled={!textInput.trim()}
                                 >
-                                    <Wand2 size={16} /> Generate BRD
+                                    Generate BRD
                                 </button>
                             </div>
+                            <textarea
+                                className="hero-textarea"
+                                placeholder="Paste meeting notes, user interviews, or raw requirements here..."
+                                value={textInput}
+                                onChange={(e) => setTextInput(e.target.value)}
+                            />
                         </div>
-                    </section>
-                )}
-
-                {loading && (
-                    <div className="loading-overlay fade-in">
-                        <Wand2 size={48} className="spinner" />
-                        <h2>Analyzing Input Data</h2>
-                        <p className="text-muted mt-4">Extracting structured requirements, decisions, and risks...</p>
                     </div>
+                </div>
+            </div>
+        );
+    }
+
+    // --- Tab Renderers ---
+
+    const renderSummaryTab = () => (
+        <div className="section-panel fade-in">
+            <div className="panel-header">
+                <h2><FileText size={24} color="var(--color-accent)" /> Document Overview</h2>
+                <p className="text-muted">High-level summary and title of the project.</p>
+            </div>
+
+            <div className="item-card">
+                <div className="item-content">
+                    <label className="text-xs">Project Title</label>
+                    {isEditing ? (
+                        <input
+                            className="input"
+                            style={{ fontSize: '1.5rem', fontWeight: 600, padding: '1rem', width: '100%' }}
+                            value={activeBrd.title}
+                            onChange={(e) => setEditDraft({ ...editDraft!, title: e.target.value })}
+                        />
+                    ) : (
+                        <h1 style={{ fontSize: '2rem' }}>{activeBrd.title}</h1>
+                    )}
+                </div>
+            </div>
+
+            <div className="item-card mt-4">
+                <div className="item-content">
+                    <label className="text-xs">Executive Summary</label>
+                    {isEditing ? (
+                        <textarea
+                            className="textarea mt-2"
+                            style={{ minHeight: '300px' }}
+                            value={activeBrd.summary}
+                            onChange={(e) => setEditDraft({ ...editDraft!, summary: e.target.value })}
+                        />
+                    ) : (
+                        <p className="mt-2" style={{ whiteSpace: 'pre-wrap', color: 'var(--color-text-muted)' }}>{activeBrd.summary}</p>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+
+    const renderRequirementsTab = () => (
+        <div className="section-panel fade-in">
+            <div className="panel-header flex justify-between items-center">
+                <div>
+                    <h2><ListChecks size={24} color="var(--color-accent)" /> Requirements</h2>
+                    <p className="text-muted">Extracted functional and non-functional requirements.</p>
+                </div>
+                {isEditing && (
+                    <button className="btn btn-secondary" onClick={() => addDraftArrayItem('requirements', { description: '', sourceQuote: '' })}>
+                        <PlusCircle size={16} /> Add Requirement
+                    </button>
                 )}
+            </div>
 
-                {brd && editDraft && (
-                    <article className="brd-editor fade-in">
-                        {/* Header Document Actions */}
-                        <div className="doc-header">
-                            <div className="flex-1">
-                                {isEditing ? (
-                                    <input
-                                        className="doc-title-input"
-                                        value={editDraft.title}
-                                        onChange={(e) => setEditDraft({ ...editDraft, title: e.target.value })}
-                                        placeholder="Document Title"
-                                    />
-                                ) : (
-                                    <h1 style={{ marginTop: 0, marginBottom: 0 }}>{brd.title}</h1>
-                                )}
-                            </div>
+            {(!activeBrd.requirements || activeBrd.requirements.length === 0) ? (
+                <div className="empty-state">No requirements extracted.</div>
+            ) : (
+                <div className="flex-col gap-4">
+                    {activeBrd.requirements.map((req, idx) => (
+                        <div key={idx} className="item-card">
+                            <div className="item-content w-full">
+                                <div className="flex justify-between items-center mb-4">
+                                    <span className="badge">REQ-{idx + 1}</span>
+                                    {isEditing && (
+                                        <button className="btn-icon-only btn-icon-danger" onClick={() => removeDraftArrayItem('requirements', idx)} title="Remove Requirement">
+                                            <XCircle size={16} />
+                                        </button>
+                                    )}
+                                </div>
 
-                            <div className="flex gap-3">
                                 {isEditing ? (
-                                    <button onClick={handleSaveBrd} className="btn btn-primary" disabled={saving}>
-                                        {saving ? <Wand2 className="spinner" style={{ margin: 0 }} size={16} /> : <Save size={16} />}
-                                        {saving ? 'Saving...' : 'Save Document'}
-                                    </button>
+                                    <div className="flex-col gap-4">
+                                        <div className="input-stacked">
+                                            <label className="text-xs">Description</label>
+                                            <textarea className="textarea" style={{ minHeight: '80px' }} value={req.description} onChange={(e) => updateDraftArray('requirements', idx, 'description', e.target.value)} />
+                                        </div>
+                                        <div className="input-stacked">
+                                            <label className="text-xs">Source Quote (Verbatim)</label>
+                                            <textarea className="textarea" style={{ minHeight: '60px' }} value={req.sourceQuote} onChange={(e) => updateDraftArray('requirements', idx, 'sourceQuote', e.target.value)} />
+                                        </div>
+                                    </div>
                                 ) : (
                                     <>
-                                        <button onClick={() => { setEditDraft(brd); setIsEditing(true); }} className="btn btn-secondary">
-                                            <Edit size={16} /> Edit
-                                        </button>
-                                        <a href={getPdfUrl(brd.id)} target="_blank" rel="noreferrer" className="btn btn-secondary">
-                                            <FileText size={16} /> Download PDF
-                                        </a>
-                                        <a href={getDocxUrl(brd.id)} target="_blank" rel="noreferrer" className="btn btn-secondary">
-                                            <Download size={16} /> Download DOCX
-                                        </a>
+                                        <p style={{ fontWeight: 500, marginBottom: '1rem' }}>{req.description}</p>
+                                        <div style={{ padding: '0.75rem', background: 'var(--color-bg)', borderLeft: '2px solid var(--color-border)', borderRadius: 'var(--radius-sm)' }}>
+                                            <p className="text-sm text-muted" style={{ fontStyle: 'italic' }}>"{req.sourceQuote}"</p>
+                                        </div>
+                                    </>
+                                )}
+
+                                {/* Links pill tags (view mode only) - would ideally come from backend logic if supported directly on BRD object */}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+
+    const renderDecisionsTab = () => (
+        <div className="section-panel fade-in">
+            <div className="panel-header flex justify-between items-center">
+                <div>
+                    <h2><LayoutDashboard size={24} color="var(--color-accent)" /> Key Decisions</h2>
+                    <p className="text-muted">Architectural or business decisions extracted.</p>
+                </div>
+                {isEditing && (
+                    <button className="btn btn-secondary" onClick={() => {
+                        if (editDraft) setEditDraft({ ...editDraft, decisions: [...editDraft.decisions, { description: '' }] });
+                    }}>
+                        <PlusCircle size={16} /> Add Decision
+                    </button>
+                )}
+            </div>
+
+            {(!activeBrd.decisions || activeBrd.decisions.length === 0) ? (
+                <div className="empty-state">No items found.</div>
+            ) : (
+                <div className="flex-col gap-3">
+                    {activeBrd.decisions.map((item, idx) => (
+                        <div key={idx} className="item-card" style={{ padding: '1rem', alignItems: 'center' }}>
+                            <div className="item-content flex" style={{ flexDirection: 'row', alignItems: 'center', gap: '1rem', width: '100%' }}>
+                                <span className="text-xs text-muted" style={{ minWidth: '24px' }}>{(idx + 1).toString().padStart(2, '0')}</span>
+                                {isEditing ? (
+                                    <input className="input" value={item.description} onChange={(e) => updateDraftArray('decisions', idx, 'description', e.target.value)} />
+                                ) : (
+                                    <span style={{ flex: 1 }}>{item.description}</span>
+                                )}
+                            </div>
+                            {isEditing && (
+                                <button className="btn-icon-only btn-icon-danger flex-shrink-0" onClick={() => removeDraftArrayItem('decisions', idx)}><XCircle size={16} /></button>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+
+    const renderStakeholdersTab = () => (
+        <div className="section-panel fade-in">
+            <div className="panel-header flex justify-between items-center">
+                <div>
+                    <h2><Users size={24} color="var(--color-accent)" /> Stakeholders</h2>
+                    <p className="text-muted">Identified parties and roles involved.</p>
+                </div>
+                {isEditing && (
+                    <button className="btn btn-secondary" onClick={() => addDraftArrayItem('stakeholders', { name: '', role: '' })}>
+                        <PlusCircle size={16} /> Add Stakeholder
+                    </button>
+                )}
+            </div>
+
+            {(!activeBrd.stakeholders || activeBrd.stakeholders.length === 0) ? (
+                <div className="empty-state">No items found.</div>
+            ) : (
+                <div className="grid-2 gap-4">
+                    {activeBrd.stakeholders.map((person, idx) => (
+                        <div key={idx} className="item-card flex justify-between" style={{ padding: '1rem', alignItems: 'center' }}>
+                            {isEditing ? (
+                                <div className="flex-col gap-2 w-full mr-4">
+                                    <input className="input" placeholder="Name" value={person.name} onChange={(e) => updateDraftArray('stakeholders', idx, 'name', e.target.value)} />
+                                    <input className="input" placeholder="Role" value={person.role} onChange={(e) => updateDraftArray('stakeholders', idx, 'role', e.target.value)} />
+                                </div>
+                            ) : (
+                                <div className="flex-col">
+                                    <span className="font-semibold">{person.name}</span>
+                                    <span className="text-sm text-muted mt-1">{person.role}</span>
+                                </div>
+                            )}
+
+                            {isEditing && (
+                                <button className="btn-icon-only btn-icon-danger flex-shrink-0" onClick={() => removeDraftArrayItem('stakeholders', idx)}><XCircle size={16} /></button>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+
+
+    const renderRisksTab = () => (
+        <div className="section-panel fade-in">
+            <div className="panel-header flex justify-between items-center">
+                <div>
+                    <h2><AlertTriangle size={24} color="var(--color-danger)" /> Risk Assessment</h2>
+                    <p className="text-muted">Identified risks and mitigation strategies.</p>
+                </div>
+                {isEditing && (
+                    <button className="btn btn-secondary" onClick={() => addDraftArrayItem('risks', { description: '', probability: 'Medium', impact: 'Medium', mitigation: '' })}>
+                        <PlusCircle size={16} /> Add Risk
+                    </button>
+                )}
+            </div>
+
+            {(!activeBrd.risks || activeBrd.risks.length === 0) ? (
+                <div className="empty-state">No risks identified.</div>
+            ) : (
+                <div className="flex-col gap-4">
+                    {activeBrd.risks.map((risk, idx) => (
+                        <div key={idx} className="item-card" style={{ borderLeft: "3px solid var(--color-danger)" }}>
+                            <div className="item-content w-full">
+                                <div className="flex gap-2 justify-end mb-4">
+                                    {isEditing ? (
+                                        <>
+                                            <input className="input text-sm" style={{ width: '100px', padding: '0.25rem 0.5rem' }} value={risk.probability || ''} placeholder="Prob" onChange={(e) => updateDraftArray('risks', idx, 'probability', e.target.value)} />
+                                            <input className="input text-sm" style={{ width: '100px', padding: '0.25rem 0.5rem' }} value={risk.impact || ''} placeholder="Impact" onChange={(e) => updateDraftArray('risks', idx, 'impact', e.target.value)} />
+                                        </>
+                                    ) : (
+                                        <>
+                                            {risk.probability && <span className="badge">Prob: {risk.probability}</span>}
+                                            {risk.impact && <span className="badge" style={{ color: 'var(--color-danger)', borderColor: 'var(--color-danger-bg)' }}>Imp: {risk.impact}</span>}
+                                        </>
+                                    )}
+                                </div>
+                                {isEditing ? (
+                                    <div className="flex-col gap-4">
+                                        <div className="input-stacked">
+                                            <label className="text-xs">Risk Description</label>
+                                            <textarea className="textarea" style={{ minHeight: '60px' }} value={risk.description} onChange={(e) => updateDraftArray('risks', idx, 'description', e.target.value)} />
+                                        </div>
+                                        <div className="input-stacked">
+                                            <label className="text-xs">Mitigation Strategy</label>
+                                            <textarea className="textarea" style={{ minHeight: '60px' }} value={risk.mitigation} onChange={(e) => updateDraftArray('risks', idx, 'mitigation', e.target.value)} />
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <p style={{ fontWeight: 500 }}>{risk.description}</p>
+                                        <div className="mt-4 text-sm text-secondary">
+                                            <strong style={{ color: 'var(--color-text-main)' }}>Mitigation: </strong> {risk.mitigation}
+                                        </div>
                                     </>
                                 )}
                             </div>
+                            {isEditing && (
+                                <button className="btn-icon-only btn-icon-danger" onClick={() => removeDraftArrayItem('risks', idx)} style={{ height: 'fit-content', marginLeft: '1rem' }}><XCircle size={16} /></button>
+                            )}
                         </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
 
-                        {/* Requirements */}
-                        <section className="card">
-                            <div className="card-header">
-                                <h3><CheckCircle2 size={20} color="var(--color-accent)" /> Requirements</h3>
-                                {isEditing && (
-                                    <button onClick={() => addDraftArrayItem('requirements', { description: '' })} className="btn btn-secondary text-sm">
-                                        <Plus size={16} /> Add Requirement
-                                    </button>
-                                )}
-                            </div>
-
-                            <div className="item-list">
-                                {(isEditing ? editDraft.requirements : brd.requirements).length > 0 ? (
-                                    (isEditing ? editDraft.requirements : brd.requirements).map((req, i) => (
-                                        <div key={i} className="list-row">
-                                            <div className="list-row-content">
-                                                {isEditing ? (
-                                                    <input
-                                                        className="input"
-                                                        value={req.description}
-                                                        placeholder="Describe the functional or non-functional requirement..."
-                                                        onChange={(e) => updateDraftArray('requirements', i, 'description', e.target.value)}
-                                                    />
-                                                ) : (
-                                                    <span className="font-medium">{req.description}</span>
-                                                )}
-                                            </div>
-                                            {isEditing && (
-                                                <button className="btn-icon-only btn-icon-danger" onClick={() => removeDraftArrayItem('requirements', i)}>
-                                                    <Trash2 size={18} />
-                                                </button>
-                                            )}
-                                        </div>
-                                    ))
-                                ) : (
-                                    <div className="empty-state">
-                                        <CheckCircle2 size={32} />
-                                        No requirements identified.
-                                    </div>
-                                )}
-                            </div>
-                        </section>
-
-                        {/* Decisions */}
-                        <section className="card">
-                            <div className="card-header">
-                                <h3><Wand2 size={20} color="var(--color-accent)" /> Decisions</h3>
-                                {isEditing && (
-                                    <button onClick={() => addDraftArrayItem('decisions', { description: '' })} className="btn btn-secondary text-sm">
-                                        <Plus size={16} /> Add Decision
-                                    </button>
-                                )}
-                            </div>
-
-                            <div className="item-list">
-                                {(isEditing ? editDraft.decisions : brd.decisions).length > 0 ? (
-                                    (isEditing ? editDraft.decisions : brd.decisions).map((dec, i) => (
-                                        <div key={i} className="list-row">
-                                            <div className="list-row-content">
-                                                {isEditing ? (
-                                                    <input
-                                                        className="input"
-                                                        value={dec.description}
-                                                        placeholder="Document a key decision made during discovery..."
-                                                        onChange={(e) => updateDraftArray('decisions', i, 'description', e.target.value)}
-                                                    />
-                                                ) : (
-                                                    <span className="font-medium">{dec.description}</span>
-                                                )}
-                                            </div>
-                                            {isEditing && (
-                                                <button className="btn-icon-only btn-icon-danger" onClick={() => removeDraftArrayItem('decisions', i)}>
-                                                    <Trash2 size={18} />
-                                                </button>
-                                            )}
-                                        </div>
-                                    ))
-                                ) : (
-                                    <div className="empty-state">
-                                        <Wand2 size={32} />
-                                        No key decisions identified.
-                                    </div>
-                                )}
-                            </div>
-                        </section>
-
-                        {/* Stakeholders */}
-                        <section className="card">
-                            <div className="card-header">
-                                <h3><Users size={20} color="var(--color-accent)" /> Stakeholders</h3>
-                                {isEditing && (
-                                    <button onClick={() => addDraftArrayItem('stakeholders', { name: '', role: '' })} className="btn btn-secondary text-sm">
-                                        <Plus size={16} /> Add Stakeholder
-                                    </button>
-                                )}
-                            </div>
-
-                            <div className="grid-2">
-                                {(isEditing ? editDraft.stakeholders : brd.stakeholders).length > 0 ? (
-                                    (isEditing ? editDraft.stakeholders : brd.stakeholders).map((sh, i) => (
-                                        <div key={i} className="list-row">
-                                            <div className="list-row-content">
-                                                {isEditing ? (
-                                                    <>
-                                                        <input
-                                                            className="input py-2"
-                                                            placeholder="Stakeholder Name"
-                                                            value={sh.name}
-                                                            onChange={(e) => updateDraftArray('stakeholders', i, 'name', e.target.value)}
-                                                        />
-                                                        <input
-                                                            className="input py-2"
-                                                            placeholder="Project Role"
-                                                            value={sh.role}
-                                                            onChange={(e) => updateDraftArray('stakeholders', i, 'role', e.target.value)}
-                                                        />
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <span className="font-semibold">{sh.name}</span>
-                                                        <span className="text-sm text-muted">{sh.role}</span>
-                                                    </>
-                                                )}
-                                            </div>
-                                            {isEditing && (
-                                                <button className="btn-icon-only btn-icon-danger" onClick={() => removeDraftArrayItem('stakeholders', i)}>
-                                                    <Trash2 size={18} />
-                                                </button>
-                                            )}
-                                        </div>
-                                    ))
-                                ) : (
-                                    <div className="empty-state" style={{ gridColumn: '1 / -1' }}>
-                                        <Users size={32} />
-                                        No stakeholders identified.
-                                    </div>
-                                )}
-                            </div>
-                        </section>
-
-                        {/* Risks */}
-                        <section className="card">
-                            <div className="card-header">
-                                <h3><AlertTriangle size={20} color="var(--color-danger)" /> Risks & Mitigations</h3>
-                                {isEditing && (
-                                    <button onClick={() => addDraftArrayItem('risks', { description: '', impact: '', mitigation: '' })} className="btn btn-secondary text-sm">
-                                        <Plus size={16} /> Add Risk
-                                    </button>
-                                )}
-                            </div>
-
-                            <div className="item-list">
-                                {(isEditing ? editDraft.risks : brd.risks)?.length > 0 ? (
-                                    (isEditing ? editDraft.risks : brd.risks).map((risk, i) => (
-                                        <div key={i} className="list-row" style={{ borderLeft: "3px solid var(--color-danger)" }}>
-                                            <div className="list-row-content">
-                                                {isEditing ? (
-                                                    <>
-                                                        <input
-                                                            className="input"
-                                                            placeholder="Risk Description"
-                                                            value={risk.description}
-                                                            onChange={(e) => updateDraftArray('risks', i, 'description', e.target.value)}
-                                                        />
-                                                        <div className="input-group mt-2">
-                                                            <div className="input-stacked" style={{ flex: '0 0 200px' }}>
-                                                                <input
-                                                                    className="input"
-                                                                    placeholder="Impact (e.g., High, Med)"
-                                                                    value={risk.impact}
-                                                                    onChange={(e) => updateDraftArray('risks', i, 'impact', e.target.value)}
-                                                                />
-                                                            </div>
-                                                            <div className="input-stacked">
-                                                                <input
-                                                                    className="input"
-                                                                    placeholder="Mitigation Strategy"
-                                                                    value={risk.mitigation}
-                                                                    onChange={(e) => updateDraftArray('risks', i, 'mitigation', e.target.value)}
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <div className="flex justify-between items-start">
-                                                            <span className="font-medium text-main">{risk.description}</span>
-                                                            {risk.impact && (
-                                                                <span className="badge" style={{ color: 'var(--color-danger)', borderColor: 'var(--color-danger-bg)' }}>
-                                                                    Impact: {risk.impact}
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                        {risk.mitigation && (
-                                                            <div className="text-sm text-muted mt-2">
-                                                                <strong>Mitigation:</strong> {risk.mitigation}
-                                                            </div>
-                                                        )}
-                                                    </>
-                                                )}
-                                            </div>
-                                            {isEditing && (
-                                                <button className="btn-icon-only btn-icon-danger" onClick={() => removeDraftArrayItem('risks', i)}>
-                                                    <Trash2 size={18} />
-                                                </button>
-                                            )}
-                                        </div>
-                                    ))
-                                ) : (
-                                    <div className="empty-state">
-                                        <AlertTriangle size={32} />
-                                        No specific risks identified.
-                                    </div>
-                                )}
-                            </div>
-                        </section>
-
-                        {/* Timeline */}
-                        <section className="card">
-                            <div className="card-header">
-                                <h3><Calendar size={20} color="var(--color-accent)" /> Timeline & Milestones</h3>
-                                {isEditing && (
-                                    <button onClick={() => addDraftArrayItem('timelines', { milestone: '', expectedDate: '', description: '' })} className="btn btn-secondary text-sm">
-                                        <Plus size={16} /> Add Milestone
-                                    </button>
-                                )}
-                            </div>
-
-                            <div className="item-list">
-                                {(isEditing ? editDraft.timelines : brd.timelines)?.length > 0 ? (
-                                    (isEditing ? editDraft.timelines : brd.timelines).map((t, i) => (
-                                        <div key={i} className="list-row">
-                                            <div className="list-row-content">
-                                                {isEditing ? (
-                                                    <>
-                                                        <input
-                                                            className="input font-semibold"
-                                                            placeholder="Milestone Title"
-                                                            value={t.milestone}
-                                                            onChange={(e) => updateDraftArray('timelines', i, 'milestone', e.target.value)}
-                                                        />
-                                                        <div className="input-group mt-2">
-                                                            <div className="input-stacked" style={{ flex: '0 0 200px' }}>
-                                                                <input
-                                                                    className="input"
-                                                                    placeholder="Expected Date (e.g. Q3 2026)"
-                                                                    value={t.expectedDate}
-                                                                    onChange={(e) => updateDraftArray('timelines', i, 'expectedDate', e.target.value)}
-                                                                />
-                                                            </div>
-                                                            <div className="input-stacked">
-                                                                <input
-                                                                    className="input"
-                                                                    placeholder="Milestone Description"
-                                                                    value={t.description}
-                                                                    onChange={(e) => updateDraftArray('timelines', i, 'description', e.target.value)}
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <div className="flex gap-4 items-center">
-                                                            <span className="font-semibold">{t.milestone}</span>
-                                                            {t.expectedDate && (
-                                                                <span className="badge">{t.expectedDate}</span>
-                                                            )}
-                                                        </div>
-                                                        <div className="text-sm text-muted">
-                                                            {t.description}
-                                                        </div>
-                                                    </>
-                                                )}
-                                            </div>
-                                            {isEditing && (
-                                                <button className="btn-icon-only btn-icon-danger" onClick={() => removeDraftArrayItem('timelines', i)}>
-                                                    <Trash2 size={18} />
-                                                </button>
-                                            )}
-                                        </div>
-                                    ))
-                                ) : (
-                                    <div className="empty-state">
-                                        <Calendar size={32} />
-                                        No timeline milestones identified.
-                                    </div>
-                                )}
-                            </div>
-                        </section>
-
-                        {/* RTM Traceability Matrix */}
-                        {rtmEntries.length > 0 && !isEditing && (
-                            <section className="card">
-                                <div className="card-header border-b-0 pb-0">
-                                    <h3><Network size={20} color="var(--color-primary)" /> Requirement Traceability Matrix</h3>
-                                </div>
-                                <div className="text-sm text-muted mb-6">Lineage linking extracted AI properties to original text quotes.</div>
-
-                                <div className="table-container">
-                                    <table className="table">
-                                        <thead>
-                                            <tr>
-                                                <th style={{ width: '25%' }}>Requirement</th>
-                                                <th style={{ width: '30%' }}>Source Quote</th>
-                                                <th>Linked Decision</th>
-                                                <th>Linked Risk</th>
-                                                <th>Timeline</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {rtmEntries.map((rtm) => (
-                                                <tr key={rtm.id}>
-                                                    <td className="font-medium">{rtm.requirement?.description || '-'}</td>
-                                                    <td className="text-muted" style={{ fontStyle: 'italic', fontSize: '0.8125rem' }}>"{rtm.sourceChunk}"</td>
-                                                    <td>{rtm.decision?.description || '-'}</td>
-                                                    <td style={{ color: rtm.risk ? 'var(--color-danger)' : 'inherit' }}>{rtm.risk?.description || '-'}</td>
-                                                    <td>{rtm.timeline?.milestone || '-'}</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </section>
-                        )}
-
-                        <div className="flex justify-center mt-8 pt-8 border-t border-slate-200">
-                            <button
-                                className="btn btn-secondary"
-                                onClick={() => { setBrd(null); setIsEditing(false); setTextInput(''); }}
-                            >
-                                <PlusCircle size={16} /> Start New Document
-                            </button>
-                        </div>
-
-                    </article>
+    const renderTimelineTab = () => (
+        <div className="section-panel fade-in">
+            <div className="panel-header flex justify-between items-center">
+                <div>
+                    <h2><Clock size={24} color="var(--color-accent)" /> Project Timeline</h2>
+                    <p className="text-muted">Expected milestones and delivery dates.</p>
+                </div>
+                {isEditing && (
+                    <button className="btn btn-secondary" onClick={() => addDraftArrayItem('timelines', { milestone: '', expectedDate: '', description: '' })}>
+                        <PlusCircle size={16} /> Add Milestone
+                    </button>
                 )}
+            </div>
+
+            {(!activeBrd.timelines || activeBrd.timelines.length === 0) ? (
+                <div className="empty-state">No timeline established.</div>
+            ) : (
+                <div className="flex-col gap-4">
+                    {activeBrd.timelines.map((item, idx) => (
+                        <div key={idx} className="item-card">
+                            <div className="item-content flex items-start" style={{ flexDirection: 'row', gap: '2rem', width: '100%' }}>
+                                <div style={{ width: '25%' }}>
+                                    {isEditing ? (
+                                        <input className="input" placeholder="Date/Phase" value={item.expectedDate} onChange={(e) => updateDraftArray('timelines', idx, 'expectedDate', e.target.value)} />
+                                    ) : (
+                                        <span className="text-sm font-semibold" style={{ color: 'var(--color-accent)' }}>{item.expectedDate}</span>
+                                    )}
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                    {isEditing ? (
+                                        <div className="flex-col gap-2">
+                                            <input className="input font-semibold" placeholder="Milestone Name" value={item.milestone} onChange={(e) => updateDraftArray('timelines', idx, 'milestone', e.target.value)} />
+                                            <textarea className="textarea" placeholder="Description" value={item.description} onChange={(e) => updateDraftArray('timelines', idx, 'description', e.target.value)} />
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <h4 className="mb-2">{item.milestone}</h4>
+                                            <p className="text-sm text-muted">{item.description}</p>
+                                        </>
+                                    )}
+                                </div>
+                                {isEditing && (
+                                    <button className="btn-icon-only btn-icon-danger ml-4" onClick={() => removeDraftArrayItem('timelines', idx)}><XCircle size={16} /></button>
+                                )}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+
+    const renderRtmTab = () => (
+        <div className="section-panel fade-in">
+            <div className="panel-header">
+                <h2><Network size={24} color="var(--color-accent)" /> Traceability Matrix</h2>
+                <p className="text-muted">Mapping requirements to decisions, risks, and timeline elements.</p>
+            </div>
+
+            {rtmEntries.length === 0 ? (
+                <div className="empty-state">Matrix is empty. No specific requirements available to trace.</div>
+            ) : (
+                <div className="table-container">
+                    <table className="table">
+                        <thead>
+                            <tr>
+                                <th style={{ width: '25%' }}>Requirement</th>
+                                <th style={{ width: '30%' }}>Source Text Segment</th>
+                                <th>Linked Decision</th>
+                                <th>Linked Risk</th>
+                                <th>Milestone</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {rtmEntries.map((entry, idx) => (
+                                <tr key={idx}>
+                                    <td className="font-semibold">{entry.requirement?.description || '-'}</td>
+                                    <td>
+                                        <div className="text-sm text-muted" style={{ fontStyle: 'italic', textTransform: 'none' }}>
+                                            "{entry.sourceChunk.length > 100 ? entry.sourceChunk.substring(0, 100) + '...' : entry.sourceChunk}"
+                                        </div>
+                                    </td>
+                                    <td>{entry.decision?.description ? <span className="text-sm">{entry.decision.description}</span> : <span className="text-xs text-muted">-</span>}</td>
+                                    <td>{entry.risk?.description ? <span className="text-sm" style={{ color: 'var(--color-danger)' }}>{entry.risk.description}</span> : <span className="text-xs text-muted">-</span>}</td>
+                                    <td>{entry.timeline?.milestone ? <span className="text-sm">{entry.timeline.milestone}</span> : <span className="text-xs text-muted">-</span>}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+        </div>
+    );
+
+    const renderActiveTab = () => {
+        switch (activeTab) {
+            case 'summary': return renderSummaryTab();
+            case 'requirements': return renderRequirementsTab();
+            case 'decisions': return renderDecisionsTab();
+            case 'stakeholders': return renderStakeholdersTab();
+            case 'risks': return renderRisksTab();
+            case 'timeline': return renderTimelineTab();
+            case 'traceability': return renderRtmTab();
+            default: return null;
+        }
+    };
+
+    return (
+        <div className="dashboard-layout">
+            {/* Sidebar Navigation */}
+            <aside className="sidebar">
+                <div className="sidebar-header">
+                    <div className="brand flex items-center gap-2" style={{ fontWeight: 700, fontSize: '1.25rem' }}>
+                        <FileText size={24} color="var(--color-accent)" />
+                        BRDify
+                    </div>
+                </div>
+
+                <nav className="sidebar-nav mt-8">
+                    <div className="text-xs mb-2 mt-4 ml-3" style={{ opacity: 0.5, fontWeight: 600, letterSpacing: '0.05em' }}>DOCUMENT STRUCTURE</div>
+                    <div className={`nav-item ${activeTab === 'summary' ? 'active' : ''}`} onClick={() => setActiveTab('summary')}>
+                        <LayoutDashboard size={18} /> Summary Overview
+                    </div>
+                    <div className={`nav-item ${activeTab === 'requirements' ? 'active' : ''}`} onClick={() => setActiveTab('requirements')}>
+                        <ListChecks size={18} /> Requirements <span className="badge ml-auto" style={{ background: 'transparent', border: 'none', color: 'var(--color-text-muted)' }}>{activeBrd.requirements?.length || 0}</span>
+                    </div>
+                    <div className={`nav-item ${activeTab === 'decisions' ? 'active' : ''}`} onClick={() => setActiveTab('decisions')}>
+                        <Settings size={18} /> Decisions
+                    </div>
+                    <div className={`nav-item ${activeTab === 'stakeholders' ? 'active' : ''}`} onClick={() => setActiveTab('stakeholders')}>
+                        <Users size={18} /> Stakeholders
+                    </div>
+                    <div className={`nav-item ${activeTab === 'risks' ? 'active' : ''}`} onClick={() => setActiveTab('risks')}>
+                        <AlertTriangle size={18} /> Risks
+                    </div>
+                    <div className={`nav-item ${activeTab === 'timeline' ? 'active' : ''}`} onClick={() => setActiveTab('timeline')}>
+                        <Clock size={18} /> Timeline
+                    </div>
+
+                    <div className="text-xs mb-2 mt-8 ml-3" style={{ opacity: 0.5, fontWeight: 600, letterSpacing: '0.05em' }}>ANALYSIS</div>
+                    <div className={`nav-item ${activeTab === 'traceability' ? 'active' : ''}`} onClick={() => setActiveTab('traceability')}>
+                        <Network size={18} /> Traceability Matrix
+                    </div>
+
+                    <div style={{ marginTop: 'auto', paddingBottom: '1rem' }}>
+                        <button
+                            className="btn btn-secondary w-full flex items-center justify-center gap-2"
+                            onClick={() => { setBrd(null); setIsEditing(false); setTextInput(''); }}
+                        >
+                            <PlusCircle size={16} /> New Document
+                        </button>
+                    </div>
+                </nav>
+            </aside>
+
+            {/* Main Stage Area */}
+            <main className="main-stage">
+                <header className="stage-header">
+                    <div className="flex items-center gap-4">
+                        {isEditing ? (
+                            <span className="badge" style={{ color: 'var(--color-accent)', borderColor: 'var(--color-border-focus)' }}>Editing Draft</span>
+                        ) : (
+                            <span className="badge">Read-Only</span>
+                        )}
+                        <h3 className="m-0 text-lg font-medium" style={{ color: 'var(--color-text-main)' }}>
+                            {activeBrd.title.substring(0, 60)}{activeBrd.title.length > 60 ? '...' : ''}
+                        </h3>
+                    </div>
+
+                    <div className="flex gap-3">
+                        {isEditing ? (
+                            <>
+                                <button className="btn btn-secondary" onClick={() => { setIsEditing(false); setEditDraft(null); }} disabled={saving}>
+                                    <XCircle size={16} /> Cancel
+                                </button>
+                                <button className="btn btn-primary" onClick={handleSaveBrd} disabled={saving}>
+                                    {saving ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
+                                    {saving ? 'Saving...' : 'Save Changes'}
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <button className="btn btn-secondary" onClick={startEditing}>
+                                    <Edit3 size={16} /> Edit
+                                </button>
+                                {brd && (
+                                    <>
+                                        <a href={getPdfUrl(brd.id)} target="_blank" rel="noreferrer" className="btn btn-primary" style={{ textDecoration: 'none' }}>
+                                            <Download size={16} /> PDF
+                                        </a>
+                                        <a href={getDocxUrl(brd.id)} target="_blank" rel="noreferrer" className="btn btn-primary" style={{ textDecoration: 'none' }}>
+                                            <Download size={16} /> DOCX
+                                        </a>
+                                    </>
+                                )}
+                            </>
+                        )}
+                    </div>
+                </header>
+
+                <div className="stage-content">
+                    <div className="content-container">
+                        {renderActiveTab()}
+                    </div>
+                </div>
             </main>
         </div>
     );

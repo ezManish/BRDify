@@ -5,11 +5,12 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8082/api';
 export interface BRD {
   id: number;
   title: string;
+  summary: string;
   status: string;
-  requirements: { description: string }[];
+  requirements: { description: string; sourceQuote?: string }[];
   decisions: { description: string }[];
   stakeholders: { name: string; role: string }[];
-  risks: { description: string; impact: string; mitigation: string }[];
+  risks: { description: string; impact: string; probability?: string; mitigation: string }[];
   timelines: { milestone: string; expectedDate: string; description: string }[];
 }
 
