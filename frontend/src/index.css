@@ -262,66 +262,241 @@ h3 {
 /* ---------------------------------------------------
    HERO / LANDING PAGE
 --------------------------------------------------- */
-.full-hero {
+/* ---------------------------------------------------
+   LANDING PAGE (Split Editorial Brutalism)
+--------------------------------------------------- */
+.landing-page {
+  width: 100vw;
   height: 100vh;
-  overflow-y: auto;
-  position: relative;
   display: flex;
   flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  /* Force everything to stay within viewport */
   background-color: var(--bg-base);
-  /* Intense, massive grid background */
-  background-image:
-    linear-gradient(rgba(10, 10, 10, 0.1) 2px, transparent 2px),
-    linear-gradient(90deg, rgba(10, 10, 10, 0.1) 2px, transparent 2px);
-  background-size: 100px 100px;
+  /* Cream */
+  color: var(--text-primary);
 }
 
-.hero-content {
-  position: relative;
-  z-index: 2;
-  text-align: center;
-  max-width: 800px;
+/* Diagonal Split Backdrop */
+.landing-backdrop-diagonal {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
-  margin: auto auto;
-  padding: 2rem 1.5rem;
+  height: 100%;
+  background-color: var(--border-stark);
+  /* Night black */
+  z-index: 1;
+  clip-path: polygon(55% 0, 100% 0, 100% 100%, 15% 100%);
+  /* Matches the wide slanted angle of the reference */
+}
+
+@media (max-width: 1024px) {
+  .landing-backdrop-diagonal {
+    width: 100%;
+    height: 70%;
+    top: auto;
+    bottom: 0;
+    clip-path: polygon(0 15%, 100% 0, 100% 100%, 0 100%);
+  }
+}
+
+/* Navbar */
+.landing-nav {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 4rem;
+  /* Restored padding so it's not smashed */
+  border-bottom: 4px solid var(--border-stark);
+  background: var(--bg-base);
+  /* Solid cream to sit over the diagonal */
+  flex-shrink: 0;
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 900;
+  font-size: 1.15rem;
+  text-transform: uppercase;
+}
+
+.nav-links {
+  display: flex;
+  gap: 2.5rem;
+}
+
+.nav-link {
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: color 0.1s;
+}
+
+.nav-link:hover {
+  color: var(--accent-color);
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.nav-actions .btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  border-width: 2px;
+  box-shadow: 2px 2px 0px var(--border-stark);
+}
+
+.nav-actions .btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 4px 4px 0px var(--brutal-shadow-hover);
+}
+
+.nav-actions .btn:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0px var(--border-stark);
+}
+
+.user-greeting {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+/* Split Hero Main Content */
+.split-hero {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  flex: 1;
+  /* Expands to fill available space */
+  align-items: center;
+  padding: 0 4rem;
+  /* minimal vertical padding */
+  min-height: 0;
+}
+
+.hero-content-left {
+  flex: 1;
+  max-width: 600px;
+  padding-right: 4rem;
+}
+
+.hero-title {
+  font-size: 3.8rem;
+  font-weight: 900;
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+  margin-bottom: 0.75rem;
+  text-transform: capitalize;
+  /* As requested by editorial style */
+}
+
+.hero-subtitle-left {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  line-height: 1.4;
+  margin-bottom: 1.25rem;
+  max-width: 90%;
+}
+
+.hero-ctas {
+  display: flex;
+  gap: 1rem;
+}
+
+.hero-content-right {
+  flex: 1;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* User logged out illustration */
+.hero-illustration {
+  position: relative;
+  width: 100%;
+  height: 280px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transform: scale(0.85);
+  /* Shrink illustration */
+}
+
+.abstract-card {
+  position: absolute;
   background: var(--bg-surface);
   border: 4px solid var(--border-stark);
-  box-shadow: 16px 16px 0px var(--accent-color), 16px 16px 0px 4px var(--border-stark);
+  padding: 2rem;
+  box-shadow: 12px 12px 0px var(--border-stark);
+  transition: transform 0.2s;
 }
 
-.hero-content h1 {
-  font-size: 6rem;
-  /* Humongous Brutal Typography */
-  font-weight: 900;
-  line-height: 0.9;
-  letter-spacing: -0.06em;
+.blue-card {
+  width: 300px;
+  height: 220px;
+  top: 20px;
+  right: 10%;
+  transform: rotate(4deg);
+  z-index: 2;
+}
+
+.violet-card {
+  width: 250px;
+  height: 250px;
+  bottom: 0;
+  left: 10%;
+  background: #f4f4f5;
+  transform: rotate(-3deg);
+  z-index: 3;
+}
+
+.illustration-icon {
+  color: var(--border-stark);
   margin-bottom: 1.5rem;
-  color: var(--text-primary);
-  text-transform: uppercase;
-  text-shadow: 4px 4px 0px var(--border-focus);
-  /* Cyber cyan drop shadow */
 }
 
-.hero-subtitle {
-  font-size: 1.5rem;
-  color: var(--text-secondary);
-  font-weight: 700;
-  max-width: 90%;
-  margin: 0 auto 2rem auto;
-  border-left: 6px solid var(--accent-color);
-  padding-left: 1rem;
-  text-align: left;
+.skeleton-line {
+  height: 12px;
+  background: #000;
+  margin-bottom: 10px;
+  width: 100%;
 }
 
-/* Hero Interaction Card */
+.skeleton-line.short {
+  width: 60%;
+}
+
+.skeleton-line.medium {
+  width: 85%;
+}
+
+/* Hero Card (Logged IN tool display) */
 .hero-card {
-  background: var(--bg-base);
+  background: var(--bg-surface);
   border: 4px solid var(--border-stark);
   text-align: left;
+  width: 100%;
   max-width: 540px;
-  margin: 0 auto;
-  /* Internal shadow drop */
-  box-shadow: inset 6px 6px 0px rgba(0, 0, 0, 0.05);
+  z-index: 10;
+  box-shadow: 16px 16px 0px rgba(0, 0, 0, 0.2);
+  /* Over Black, box shadow needs to be visible, or use white/cyan */
+}
+
+/* If hero-card is over the black diagonal, give it a cyan pop shadow */
+.hero-card {
+  box-shadow: 12px 12px 0px var(--border-focus);
 }
 
 .hero-tabs {
@@ -375,15 +550,15 @@ h3 {
   align-items: center;
   gap: 1.5rem;
   text-align: center;
-  background: var(--bg-surface);
+  background: var(--bg-base);
   transition: all 0.2s;
 }
 
 .upload-zone.clean:hover {
-  border-color: var(--accent-color);
-  background: #f4f4f5;
+  border-color: var(--border-focus);
+  background: var(--bg-surface);
   transform: translate(-4px, -4px);
-  box-shadow: 6px 6px 0px var(--accent-color);
+  box-shadow: 6px 6px 0px var(--border-focus);
 }
 
 .icon-ring {
@@ -393,7 +568,8 @@ h3 {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg-base);
+  background: var(--bg-surface);
+  box-shadow: 4px 4px 0px var(--border-stark);
 }
 
 .hero-textarea.clean {
@@ -416,6 +592,101 @@ h3 {
   border-color: var(--border-focus);
   box-shadow: 6px 6px 0px var(--border-focus);
   transform: translate(-2px, -2px);
+}
+
+/* Feature Cards Section (Bottom overlapping) */
+.feature-cards-section {
+  position: relative;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+  padding: 0 4rem 1.25rem 4rem;
+  margin-top: 0;
+  flex-shrink: 0;
+  /* Let cards take their intrinsic height */
+}
+
+@media (max-width: 1024px) {
+  .split-hero {
+    flex-direction: column;
+    padding: 2rem;
+  }
+
+  .hero-content-left {
+    padding-right: 0;
+    margin-bottom: 4rem;
+  }
+
+  .feature-cards-section {
+    grid-template-columns: repeat(2, 1fr);
+    padding: 2rem;
+    margin-top: 2rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .feature-cards-section {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-title {
+    font-size: 3.5rem;
+  }
+}
+
+.feature-card {
+  background: var(--border-stark);
+  /* Night black card */
+  color: var(--bg-surface);
+  border: 2px solid #52525b;
+  /* Visible dark grey border over black background */
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s;
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+  border-color: var(--border-focus);
+}
+
+.feature-icon {
+  margin-bottom: 0.5rem;
+  color: #fff;
+  width: 18px;
+  height: 18px;
+}
+
+.feature-card h3 {
+  font-size: 1rem;
+  font-weight: 800;
+  margin: 0 0 0.5rem 0;
+  color: var(--bg-surface);
+  /* Force white color in brutalist dark mode */
+}
+
+.feature-card p {
+  color: #a1a1aa;
+  /* Muted gray text for dark bg */
+  font-size: 0.75rem;
+  line-height: 1.25;
+  flex-grow: 1;
+  margin-bottom: 0.75rem;
+}
+
+.feature-link {
+  color: #fff;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  transition: color 0.15s;
+}
+
+.feature-card:hover .feature-link {
+  color: var(--border-focus);
 }
 
 /* ---------------------------------------------------
