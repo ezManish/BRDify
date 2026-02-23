@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { createUserWithEmailAndPassword, updateProfile, signInWithPopup } from "firebase/auth";
 import { auth, googleProvider } from "../firebase";
-import { Mail, Lock, User, UserPlus, AlertCircle, Loader2 } from 'lucide-react';
+import { Mail, Lock, User, UserPlus, AlertCircle, Loader2, FileText } from 'lucide-react';
 import "../components/AuthForm.css";
 
 const Signup = () => {
@@ -60,6 +60,9 @@ const Signup = () => {
         <div className="auth-form-section">
           <div className="auth-form-content">
             <div className="auth-header">
+              <div className="auth-logo-icon">
+                <FileText size={28} />
+              </div>
               <h2 className="auth-title">Create Account</h2>
               <p className="auth-subtitle">Join BRDify and build better requirements</p>
             </div>
@@ -142,8 +145,6 @@ const Signup = () => {
 
         {/* Visual area for Signup (Right side on code, rendered left side on screen due to row-reverse) */}
         <div className="auth-visual-section">
-          <img src="https://images.unsplash.com/photo-1604871000636-074fa5117945?q=80&w=2400&auto=format&fit=crop" alt="Abstract geometric rendering" className="visual-image" />
-          <div className="visual-overlay"></div>
           <div className="visual-content">
             <span className="visual-badge">Community</span>
             <h1 className="visual-title">Join a new era of engineering.</h1>

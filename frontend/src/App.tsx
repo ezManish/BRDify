@@ -161,7 +161,7 @@ function App() {
                         <div className="sidebar-nav mt-8">
                             <div className="skeleton mb-4" style={{ width: '80px', height: '12px' }}></div>
                             {[1, 2, 3, 4, 5, 6].map(i => (
-                                <div key={i} className="skeleton mb-2" style={{ width: '100%', height: '36px', borderRadius: 'var(--radius-sm)' }}></div>
+                                <div key={i} className="skeleton mb-2" style={{ width: '100%', height: '36px' }}></div>
                             ))}
                         </div>
                     </aside>
@@ -279,8 +279,8 @@ function App() {
                         </div>
                     ) : (
                         <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '3rem' }}>
-                            <Link to="/signup" className="btn btn-primary" style={{ padding: '0.875rem 2.5rem', fontSize: '1.125rem', textDecoration: 'none', borderRadius: 'var(--radius-md)' }}>Get Started for Free</Link>
-                            <Link to="/login" className="btn btn-secondary" style={{ padding: '0.875rem 2.5rem', fontSize: '1.125rem', textDecoration: 'none', borderRadius: 'var(--radius-md)' }}>Log In</Link>
+                            <Link to="/signup" className="btn btn-primary" style={{ padding: '0.875rem 2.5rem', fontSize: '1.25rem', textDecoration: 'none' }}>Get Started for Free</Link>
+                            <Link to="/login" className="btn btn-secondary" style={{ padding: '0.875rem 2.5rem', fontSize: '1.25rem', textDecoration: 'none' }}>Log In</Link>
                         </div>
                     )}
                 </div>
@@ -308,7 +308,7 @@ function App() {
                             onChange={(e) => setEditDraft({ ...editDraft!, title: e.target.value })}
                         />
                     ) : (
-                        <h1 style={{ fontSize: '2rem' }}>{activeBrd?.title || 'Untitled Document'}</h1>
+                        <h1>{activeBrd?.title || 'Untitled Document'}</h1>
                     )}
                 </div>
             </div>
@@ -375,7 +375,7 @@ function App() {
                                 ) : (
                                     <>
                                         <p style={{ fontWeight: 500, marginBottom: '1rem' }}>{req.description}</p>
-                                        <div style={{ padding: '0.75rem', background: 'var(--color-bg)', borderLeft: '2px solid var(--color-border)', borderRadius: 'var(--radius-sm)' }}>
+                                        <div style={{ padding: '1.25rem', background: 'var(--bg-surface)', borderLeft: '4px solid var(--border-stark)', border: '2px dashed var(--border-stark)' }}>
                                             <p className="text-sm text-muted" style={{ fontStyle: 'italic' }}>"{req.sourceQuote}"</p>
                                         </div>
                                     </>

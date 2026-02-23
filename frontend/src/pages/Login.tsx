@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 import { auth, googleProvider } from "../firebase";
-import { Mail, Lock, LogIn, AlertCircle, Loader2 } from 'lucide-react';
+import { Mail, Lock, LogIn, AlertCircle, Loader2, FileText } from 'lucide-react';
 import "../components/AuthForm.css";
 
 const Login = () => {
@@ -51,6 +51,9 @@ const Login = () => {
         <div className="auth-form-section">
           <div className="auth-form-content">
             <div className="auth-header">
+              <div className="auth-logo-icon">
+                <FileText size={28} />
+              </div>
               <h2 className="auth-title">Welcome Back</h2>
               <p className="auth-subtitle">Enter your details to access your dashboard.</p>
             </div>
@@ -121,8 +124,6 @@ const Login = () => {
 
         {/* Right Side: Visual */}
         <div className="auth-visual-section">
-          <img src="https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?q=80&w=2400&auto=format&fit=crop" alt="Abstract 3D rendering" className="visual-image" />
-          <div className="visual-overlay"></div>
           <div className="visual-content">
             <span className="visual-badge">Requirements</span>
             <h1 className="visual-title">Build faster, align better.</h1>
